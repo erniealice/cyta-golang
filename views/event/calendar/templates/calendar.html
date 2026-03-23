@@ -1,0 +1,20 @@
+{{/* Full page — for direct access / non-HTMX requests */}}
+{{define "event-calendar"}}
+{{template "app-shell" .}}
+{{end}}
+
+{{/* Month content partial — for HTMX month view */}}
+{{define "event-calendar-month-content"}}
+<div class="page-content page-content--calendar">
+    <link rel="stylesheet" href="/assets/css/pyeza/calendar.css?v={{.CacheVersion}}">
+    {{template "calendar-month" .}}
+</div>
+{{end}}
+
+{{/* Week content partial — for HTMX week view */}}
+{{define "event-calendar-week-content"}}
+<div class="page-content page-content--calendar">
+    <link rel="stylesheet" href="/assets/css/pyeza/calendar.css?v={{.CacheVersion}}">
+    {{template "calendar-week" .}}
+</div>
+{{end}}

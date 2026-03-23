@@ -1,0 +1,129 @@
+package event
+
+import (
+	"context"
+
+	cyta "github.com/erniealice/cyta-golang"
+
+	pyeza "github.com/erniealice/pyeza-golang"
+	"github.com/erniealice/pyeza-golang/types"
+	"github.com/erniealice/pyeza-golang/view"
+
+	eventpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event"
+	eventattendeepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event_attendee"
+	eventoccurrencepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event_occurrence"
+	eventproductpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event_product"
+	eventresourcepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event_resource"
+
+	eventaction "github.com/erniealice/cyta-golang/views/event/action"
+	eventcalendar "github.com/erniealice/cyta-golang/views/event/calendar"
+	eventdetail "github.com/erniealice/cyta-golang/views/event/detail"
+	eventlist "github.com/erniealice/cyta-golang/views/event/list"
+)
+
+// ModuleDeps holds all dependencies for the event module.
+type ModuleDeps struct {
+	Routes       cyta.EventRoutes
+	Labels       cyta.EventLabels
+	CommonLabels pyeza.CommonLabels
+	TableLabels  types.TableLabels
+
+	// Event CRUD
+	CreateEvent func(ctx context.Context, req *eventpb.CreateEventRequest) (*eventpb.CreateEventResponse, error)
+	ReadEvent   func(ctx context.Context, req *eventpb.ReadEventRequest) (*eventpb.ReadEventResponse, error)
+	UpdateEvent func(ctx context.Context, req *eventpb.UpdateEventRequest) (*eventpb.UpdateEventResponse, error)
+	DeleteEvent func(ctx context.Context, req *eventpb.DeleteEventRequest) (*eventpb.DeleteEventResponse, error)
+	ListEvents  func(ctx context.Context, req *eventpb.ListEventsRequest) (*eventpb.ListEventsResponse, error)
+
+	// Attendee operations
+	ListEventAttendees func(ctx context.Context, req *eventattendeepb.ListEventAttendeesRequest) (*eventattendeepb.ListEventAttendeesResponse, error)
+
+	// Resource operations
+	ListEventResources func(ctx context.Context, req *eventresourcepb.ListEventResourcesRequest) (*eventresourcepb.ListEventResourcesResponse, error)
+
+	// Product operations
+	ListEventProducts func(ctx context.Context, req *eventproductpb.ListEventProductsRequest) (*eventproductpb.ListEventProductsResponse, error)
+
+	// Occurrence operations
+	ListEventOccurrences func(ctx context.Context, req *eventoccurrencepb.ListEventOccurrencesRequest) (*eventoccurrencepb.ListEventOccurrencesResponse, error)
+}
+
+// Module holds all constructed event views.
+type Module struct {
+	routes        cyta.EventRoutes
+	List          view.View
+	Detail        view.View
+	TabAction     view.View
+	Add           view.View
+	Edit          view.View
+	Delete        view.View
+	BulkDelete    view.View
+	SetStatus     view.View
+	BulkSetStatus view.View
+	Calendar      view.View
+}
+
+// NewModule creates a new event module with all views wired.
+func NewModule(deps *ModuleDeps) *Module {
+	detailDeps := &eventdetail.DetailViewDeps{
+		Routes:               deps.Routes,
+		Labels:               deps.Labels,
+		CommonLabels:         deps.CommonLabels,
+		TableLabels:          deps.TableLabels,
+		ReadEvent:            deps.ReadEvent,
+		ListEventAttendees:   deps.ListEventAttendees,
+		ListEventResources:   deps.ListEventResources,
+		ListEventProducts:    deps.ListEventProducts,
+		ListEventOccurrences: deps.ListEventOccurrences,
+	}
+
+	actionDeps := &eventaction.Deps{
+		Routes:      deps.Routes,
+		Labels:      deps.Labels,
+		CreateEvent: deps.CreateEvent,
+		ReadEvent:   deps.ReadEvent,
+		UpdateEvent: deps.UpdateEvent,
+		DeleteEvent: deps.DeleteEvent,
+		ListEvents:  deps.ListEvents,
+	}
+
+	return &Module{
+		routes: deps.Routes,
+		List: eventlist.NewView(&eventlist.ListViewDeps{
+			Routes:       deps.Routes,
+			ListEvents:   deps.ListEvents,
+			Labels:       deps.Labels,
+			CommonLabels: deps.CommonLabels,
+			TableLabels:  deps.TableLabels,
+		}),
+		Detail:        eventdetail.NewView(detailDeps),
+		TabAction:     eventdetail.NewTabAction(detailDeps),
+		Add:           eventaction.NewAddAction(actionDeps),
+		Edit:          eventaction.NewEditAction(actionDeps),
+		Delete:        eventaction.NewDeleteAction(actionDeps),
+		BulkDelete:    eventaction.NewBulkDeleteAction(actionDeps),
+		SetStatus:     eventaction.NewSetStatusAction(actionDeps),
+		BulkSetStatus: eventaction.NewBulkSetStatusAction(actionDeps),
+		Calendar: eventcalendar.NewView(&eventcalendar.ViewDeps{
+			Routes:       deps.Routes,
+			Labels:       deps.Labels,
+			CommonLabels: deps.CommonLabels,
+		}),
+	}
+}
+
+// RegisterRoutes registers all event routes.
+func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
+	r.GET(m.routes.ListURL, m.List)
+	r.GET(m.routes.DetailURL, m.Detail)
+	r.GET(m.routes.TabActionURL, m.TabAction)
+	r.GET(m.routes.AddURL, m.Add)
+	r.POST(m.routes.AddURL, m.Add)
+	r.GET(m.routes.EditURL, m.Edit)
+	r.POST(m.routes.EditURL, m.Edit)
+	r.POST(m.routes.DeleteURL, m.Delete)
+	r.POST(m.routes.BulkDeleteURL, m.BulkDelete)
+	r.POST(m.routes.SetStatusURL, m.SetStatus)
+	r.POST(m.routes.BulkSetStatusURL, m.BulkSetStatus)
+	r.GET(m.routes.CalendarURL, m.Calendar)
+}

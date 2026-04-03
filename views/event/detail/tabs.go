@@ -298,8 +298,8 @@ func buildProductsTable(
 			productName = p.GetProductId()
 		}
 		quantity := fmt.Sprintf("%d", p.GetQuantity())
-		unitPrice := fmt.Sprintf("%.2f %s", p.GetUnitPrice(), p.GetCurrency())
-		totalPrice := fmt.Sprintf("%.2f %s", p.GetTotalPrice(), p.GetCurrency())
+		unitPrice := fmt.Sprintf("%.2f %s", float64(p.GetUnitPrice())/100.0, p.GetCurrency())
+		totalPrice := fmt.Sprintf("%.2f %s", float64(p.GetTotalPrice())/100.0, p.GetCurrency())
 
 		rows = append(rows, types.TableRow{
 			ID: id,

@@ -19,39 +19,39 @@ import (
 // PageData holds the data for the event detail page.
 type PageData struct {
 	types.PageData
-	ContentTemplate   string
-	Event             map[string]any
-	Labels            cyta.EventLabels
-	ActiveTab         string
-	TabItems          []pyeza.TabItem
-	AttendeesTable    *types.TableConfig
-	ResourcesTable    *types.TableConfig
-	ProductsTable     *types.TableConfig
-	OccurrencesTable  *types.TableConfig
+	ContentTemplate  string
+	Event            map[string]any
+	Labels           cyta.EventLabels
+	ActiveTab        string
+	TabItems         []pyeza.TabItem
+	AttendeesTable   *types.TableConfig
+	ResourcesTable   *types.TableConfig
+	ProductsTable    *types.TableConfig
+	OccurrencesTable *types.TableConfig
 }
 
 // eventToMap converts an Event protobuf to a map[string]any for template use.
 func eventToMap(e *eventpb.Event) map[string]any {
 	return map[string]any{
-		"id":                       e.GetId(),
-		"name":                     e.GetName(),
-		"description":              e.GetDescription(),
-		"start_date_time_utc":      e.GetStartDateTimeUtc(),
-		"end_date_time_utc":        e.GetEndDateTimeUtc(),
-		"start_date_time_string":   e.GetStartDateTimeUtcString(),
-		"end_date_time_string":     e.GetEndDateTimeUtcString(),
-		"timezone":                 e.GetTimezone(),
-		"all_day":                  e.GetAllDay(),
-		"organizer_id":             e.GetOrganizerId(),
-		"location_id":              e.GetLocationId(),
-		"event_recurrence_id":      e.GetEventRecurrenceId(),
-		"parent_event_id":          e.GetParentEventId(),
-		"workspace_id":             e.GetWorkspaceId(),
-		"status":                   eventStatusString(e.GetStatus()),
-		"status_variant":           eventStatusVariant(e.GetStatus()),
-		"active":                   e.GetActive(),
-		"date_created_string":      e.GetDateCreatedString(),
-		"date_modified_string":     e.GetDateModifiedString(),
+		"id":                     e.GetId(),
+		"name":                   e.GetName(),
+		"description":            e.GetDescription(),
+		"start_date_time_utc":    e.GetStartDateTimeUtc(),
+		"end_date_time_utc":      e.GetEndDateTimeUtc(),
+		"start_date_time_string": e.GetStartDateTimeUtcString(),
+		"end_date_time_string":   e.GetEndDateTimeUtcString(),
+		"timezone":               e.GetTimezone(),
+		"all_day":                e.GetAllDay(),
+		"organizer_id":           e.GetOrganizerId(),
+		"location_id":            e.GetLocationId(),
+		"event_recurrence_id":    e.GetEventRecurrenceId(),
+		"parent_event_id":        e.GetParentEventId(),
+		"workspace_id":           e.GetWorkspaceId(),
+		"status":                 eventStatusString(e.GetStatus()),
+		"status_variant":         eventStatusVariant(e.GetStatus()),
+		"active":                 e.GetActive(),
+		"date_created_string":    e.GetDateCreatedString(),
+		"date_modified_string":   e.GetDateModifiedString(),
 	}
 }
 
@@ -132,7 +132,7 @@ func NewView(deps *DetailViewDeps) view.View {
 		// KB help content
 		if viewCtx.Translations != nil {
 			if provider, ok := viewCtx.Translations.(*lynguaV1.TranslationProvider); ok {
-				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "events-detail"); kb != nil {
+				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "event-detail"); kb != nil {
 					pageData.HasHelp = true
 					pageData.HelpContent = kb.Body
 				}
@@ -153,7 +153,7 @@ func buildTabItems(l cyta.EventLabels, id string, routes cyta.EventRoutes) []pye
 		{Key: "overview", Label: l.Tabs.Overview, Href: base + "?tab=overview", HxGet: action + "overview", Icon: "icon-info"},
 		{Key: "attendees", Label: l.Tabs.Attendees, Href: base + "?tab=attendees", HxGet: action + "attendees", Icon: "icon-users"},
 		{Key: "resources", Label: l.Tabs.Resources, Href: base + "?tab=resources", HxGet: action + "resources", Icon: "icon-box"},
-		{Key: "products", Label: l.Tabs.Products, Href: base + "?tab=products", HxGet: action + "products", Icon: "icon-tag"},
+		{Key: "product", Label: l.Tabs.Products, Href: base + "?tab=products", HxGet: action + "product", Icon: "icon-tag"},
 		{Key: "occurrences", Label: l.Tabs.Occurrences, Href: base + "?tab=occurrences", HxGet: action + "occurrences", Icon: "icon-repeat"},
 	}
 }
@@ -167,7 +167,7 @@ func loadTabData(ctx context.Context, deps *DetailViewDeps, pageData *PageData, 
 		loadAttendeesTab(ctx, deps, pageData, id)
 	case "resources":
 		loadResourcesTab(ctx, deps, pageData, id)
-	case "products":
+	case "product":
 		loadProductsTab(ctx, deps, pageData, id)
 	case "occurrences":
 		loadOccurrencesTab(ctx, deps, pageData, id)

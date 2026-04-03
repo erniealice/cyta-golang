@@ -96,9 +96,9 @@ type CalendarWeekData struct {
 	HourEnd    int
 	Hours      []CalendarHour
 
-	PrevWeekURL  string
-	NextWeekURL  string
-	TodayURL     string
+	PrevWeekURL string
+	NextWeekURL string
+	TodayURL    string
 
 	ViewMode     string
 	MonthViewURL string

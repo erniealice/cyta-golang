@@ -19,7 +19,9 @@ import (
 
 	cyta "github.com/erniealice/cyta-golang"
 	eventmod "github.com/erniealice/cyta-golang/views/event"
+	eventtagmod "github.com/erniealice/cyta-golang/views/event_tag"
 	eventpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event"
+	"github.com/erniealice/espyna-golang/contrib/postgres/reference"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 	pyeza "github.com/erniealice/pyeza-golang"
 )
@@ -34,12 +36,17 @@ type BlockOption func(*blockConfig)
 type blockConfig struct {
 	enableAll bool
 	event     bool
+	eventTag  bool
 }
 
 // WithEvent registers the Event module (list, detail, CRUD, calendar).
 func WithEvent() BlockOption { return func(c *blockConfig) { c.event = true } }
 
-func (c *blockConfig) wantEvent() bool { return c.enableAll || c.event }
+// WithEventTag registers the EventTag module (list + drawer form).
+func WithEventTag() BlockOption { return func(c *blockConfig) { c.eventTag = true } }
+
+func (c *blockConfig) wantEvent() bool    { return c.enableAll || c.event }
+func (c *blockConfig) wantEventTag() bool { return c.enableAll || c.eventTag }
 
 // ---------------------------------------------------------------------------
 // Block — the main Lego entry point
@@ -97,6 +104,44 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			}
 
 			eventmod.NewModule(deps).RegisterRoutes(ctx.Routes)
+		}
+
+		// --- Register EventTag module ---
+		if cfg.wantEventTag() {
+			// Load routes (defaults + optional lyngua overrides).
+			eventTagRoutes := cyta.DefaultEventTagRoutes()
+			_ = translations.LoadPathIfExists("en", ctx.BusinessType, "route.json", "event_tag", &eventTagRoutes)
+
+			// Load labels — event_tag.json has no root wrap (flat keys), so we
+			// pass "" as the dotPath. Falls back silently to zero values if
+			// the file is absent (e.g. for a tier that hasn't localized yet).
+			var eventTagLabels cyta.EventTagLabels
+			if err := translations.LoadPathIfExists("en", ctx.BusinessType, "event_tag.json", "", &eventTagLabels); err != nil {
+				log.Printf("Warning: Failed to load event_tag labels: %v", err)
+			}
+
+			eventTagDeps := &eventtagmod.ModuleDeps{
+				Routes:       eventTagRoutes,
+				Labels:       eventTagLabels,
+				CommonLabels: ctx.Common,
+				TableLabels:  ctx.Table,
+			}
+
+			// Overlay with real use cases if available.
+			uc := assertUseCases(ctx.UseCases)
+			if uc != nil {
+				wireEventTagDeps(eventTagDeps, uc)
+			}
+
+			// Reference-checker for the delete-guard. Optional — if not
+			// wired, the list page simply renders without the in-use tooltip.
+			if ctx.RefChecker != nil {
+				if refChecker, ok := ctx.RefChecker.(*reference.Checker); ok && refChecker != nil {
+					eventTagDeps.GetEventTagInUseIDs = refChecker.GetEventTagInUseIDs
+				}
+			}
+
+			eventtagmod.NewModule(eventTagDeps).RegisterRoutes(ctx.Routes)
 		}
 
 		log.Println("  ✓ Schedule domain initialized (cyta)")

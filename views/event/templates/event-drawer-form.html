@@ -1,0 +1,173 @@
+{{/*
+================================================================================
+EVENT DRAWER FORM — Phase 4 of event-management epic
+================================================================================
+Loaded into #sheetContent via HTMX from:
+    GET  /action/schedule/add[?date=YYYY-MM-DD&at=HH:MM]   → blank form, time pre-seeded
+    GET  /action/schedule/edit/{id}                         → populated for edit
+    POST → handlers_save.go orchestrates event + attendees + tags + attachments
+
+Required data: form.Data (see views/event/form/data.go)
+================================================================================
+*/}}
+{{define "event-drawer-form"}}
+<form hx-post="{{.FormAction}}"
+      hx-encoding="multipart/form-data"
+      hx-swap="none"
+      hx-on::after-request="lf.Sheet.handleResponse(event)"
+      data-event-drawer-form>
+
+    {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
+
+    <div class="sheet-body">
+
+        {{/* ── Name ─────────────────────────────────────────────────────── */}}
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "name"
+                "Label" .Labels.NameLabel
+                "Value" .Name
+                "Required" true
+                "Placeholder" .Labels.NamePlaceholder
+            )}}
+        </div>
+
+        {{/* ── All-day toggle ───────────────────────────────────────────── */}}
+        <div class="form-row single">
+            <div class="form-group form-group-toggle">
+                <label class="form-label" for="all_day">{{.Labels.AllDayLabel}}</label>
+                {{template "toggle" (dict "Name" "all_day" "Checked" .AllDay "Value" "true")}}
+            </div>
+        </div>
+
+        {{/* ── Start date + time ────────────────────────────────────────── */}}
+        <div class="form-row" data-event-time-row="start">
+            {{template "form-group" (dict
+                "Type" "date"
+                "Name" "start_date"
+                "Label" .Labels.StartDateLabel
+                "Value" .StartDate
+                "Required" true
+            )}}
+            {{template "form-group" (dict
+                "Type" "time"
+                "Name" "start_time"
+                "Label" .Labels.StartTimeLabel
+                "Value" .StartTime
+                "Step" "1800"
+                "Class" "event-form-time"
+            )}}
+        </div>
+
+        {{/* ── End date + time ──────────────────────────────────────────── */}}
+        <div class="form-row" data-event-time-row="end">
+            {{template "form-group" (dict
+                "Type" "date"
+                "Name" "end_date"
+                "Label" .Labels.EndDateLabel
+                "Value" .EndDate
+                "Required" true
+            )}}
+            {{template "form-group" (dict
+                "Type" "time"
+                "Name" "end_time"
+                "Label" .Labels.EndTimeLabel
+                "Value" .EndTime
+                "Step" "1800"
+                "Class" "event-form-time"
+            )}}
+        </div>
+
+        {{/* ── Status ───────────────────────────────────────────────────── */}}
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "select"
+                "Name" "status"
+                "Label" .Labels.StatusLabel
+                "Options" .StatusOptions
+            )}}
+        </div>
+
+        {{/* ── Invitees (multi-pick of workspace_user + client) ─────────── */}}
+        <div class="form-row single">
+            <span class="form-label" id="event-form-invitees-label">{{.Labels.InviteesLabel}}</span>
+            {{template "multi-select" (dict
+                "ID" "event-form-invitees"
+                "Name" "invitees"
+                "Placeholder" .Labels.InviteesPlaceholder
+                "SearchPlaceholder" .Labels.InviteesPlaceholder
+                "LabelID" "event-form-invitees-label"
+                "Options" .AttendeeOptions
+                "Selected" .SelectedAttendees
+                "MaxVisibleChips" 2
+            )}}
+        </div>
+
+        {{/* ── Tags (multi-pick) ───────────────────────────────────────── */}}
+        <div class="form-row single">
+            <span class="form-label" id="event-form-tags-label">{{.Labels.TagsLabel}}</span>
+            {{template "multi-select" (dict
+                "ID" "event-form-tags"
+                "Name" "tag_ids"
+                "Placeholder" .Labels.TagsPlaceholder
+                "SearchPlaceholder" .Labels.TagsPlaceholder
+                "LabelID" "event-form-tags-label"
+                "Options" .TagOptions
+                "Selected" .SelectedTags
+                "MaxVisibleChips" 3
+            )}}
+        </div>
+
+        {{/* ── Notes (maps to event.description) ────────────────────────── */}}
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "textarea"
+                "Name" "notes"
+                "Label" .Labels.NotesLabel
+                "Value" .Notes
+                "Placeholder" .Labels.NotesPlaceholder
+                "Rows" 3
+            )}}
+        </div>
+
+        {{/* ── Attachments (Phase 5 — drop zone partial) ────────────────── */}}
+        <div class="form-row single">
+            {{template "event-attachment-zone" (dict
+                "Label" .Labels.AttachmentsLabel
+                "Hint"  .Labels.AttachmentsHint
+                "Existing" .Attachments
+                "EventID" .ID
+            )}}
+        </div>
+
+    </div>
+
+    {{template "sheet-form-footer" (dict
+        "CommonLabels" .CommonLabels
+        "ShowCancel" true
+        "IsEdit" .IsEdit
+    )}}
+
+    {{template "event-drawer-form-init"}}
+</form>
+{{end}}
+
+{{/*
+================================================================================
+EVENT-DRAWER-FORM-INIT — bootstraps the time-snap / 1hr-default JS once the
+form has been swapped in. Lives inline so it always runs after the new form
+elements are present.
+================================================================================
+*/}}
+{{define "event-drawer-form-init"}}
+<script>
+(function() {
+    if (typeof window.lf === 'undefined' || !window.lf.eventDrawerForm) return;
+    var form = document.querySelector('[data-event-drawer-form]:not([data-event-drawer-form-bound])');
+    if (!form) return;
+    form.setAttribute('data-event-drawer-form-bound', '1');
+    window.lf.eventDrawerForm.bind(form);
+})();
+</script>
+{{end}}

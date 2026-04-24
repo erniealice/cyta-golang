@@ -19,8 +19,20 @@ type EventLabels struct {
 	Detail  EventDetailLabels  `json:"detail"`
 	Tabs    EventTabLabels     `json:"tabs"`
 	Confirm EventConfirmLabels `json:"confirm"`
-	Errors  EventErrorLabels   `json:"errors"`
-	Status  EventStatusLabels  `json:"status"`
+	Errors   EventErrorLabels            `json:"errors"`
+	Status   EventStatusLabels           `json:"status"`
+	Calendar EventCalendarPopoverLabels  `json:"calendar"`
+}
+
+// EventCalendarPopoverLabels holds strings rendered inside the month/week/day
+// cell popover (Phase 3 of event-management epic). One popover per cell;
+// "View day" preserves existing day-view nav, "New event at HH:MM" opens
+// the event drawer pre-seeded with that time.
+type EventCalendarPopoverLabels struct {
+	ViewDay     string `json:"viewDay"`
+	NewEventAt  string `json:"newEventAt"`  // template: "New event at {{time}}"
+	NewEvent    string `json:"newEvent"`    // fallback when no time available
+	MoreEvents  string `json:"moreEvents"`  // "+N more events"
 }
 
 type EventPageLabels struct {
@@ -52,16 +64,27 @@ type EventEmptyLabels struct {
 }
 
 type EventFormLabels struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	StartDate   string `json:"startDate"`
-	EndDate     string `json:"endDate"`
-	Timezone    string `json:"timezone"`
-	AllDay      string `json:"allDay"`
-	Organizer   string `json:"organizer"`
-	Location    string `json:"location"`
-	Status      string `json:"status"`
-	Recurrence  string `json:"recurrence"`
+	Name                string `json:"name"`
+	NamePlaceholder     string `json:"namePlaceholder"`
+	Description         string `json:"description"`
+	StartDate           string `json:"startDate"`
+	EndDate             string `json:"endDate"`
+	StartTime           string `json:"startTime"`
+	EndTime             string `json:"endTime"`
+	Timezone            string `json:"timezone"`
+	AllDay              string `json:"allDay"`
+	Organizer           string `json:"organizer"`
+	Location            string `json:"location"`
+	Status              string `json:"status"`
+	Recurrence          string `json:"recurrence"`
+	Notes               string `json:"notes"`
+	NotesPlaceholder    string `json:"notesPlaceholder"`
+	Invitees            string `json:"invitees"`
+	InviteesPlaceholder string `json:"inviteesPlaceholder"`
+	Tags                string `json:"tags"`
+	TagsPlaceholder     string `json:"tagsPlaceholder"`
+	Attachments         string `json:"attachments"`
+	AttachmentsHint     string `json:"attachmentsHint"`
 }
 
 type EventActionLabels struct {
@@ -111,6 +134,68 @@ type EventStatusLabels struct {
 	Tentative string `json:"tentative"`
 	Confirmed string `json:"confirmed"`
 	Cancelled string `json:"cancelled"`
+}
+
+// ---------------------------------------------------------------------------
+// EventTag labels
+// ---------------------------------------------------------------------------
+
+// EventTagLabels holds all translatable strings for the event-tag module.
+// Mirrors RoleLabels (entydad-golang) but omits the Detail sub-struct —
+// tags only have a list + drawer form, no dedicated detail page.
+type EventTagLabels struct {
+	Page    EventTagPageLabels   `json:"page"`
+	Buttons EventTagButtonLabels `json:"buttons"`
+	Columns EventTagColumnLabels `json:"columns"`
+	Empty   EventTagEmptyLabels  `json:"empty"`
+	Form    EventTagFormLabels   `json:"form"`
+	Actions EventTagActionLabels `json:"actions"`
+}
+
+type EventTagPageLabels struct {
+	Heading         string `json:"heading"`
+	HeadingActive   string `json:"headingActive"`
+	HeadingInactive string `json:"headingInactive"`
+	Caption         string `json:"caption"`
+	CaptionActive   string `json:"captionActive"`
+	CaptionInactive string `json:"captionInactive"`
+}
+
+type EventTagButtonLabels struct {
+	AddTag string `json:"addTag"`
+}
+
+type EventTagColumnLabels struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Color       string `json:"color"`
+	Status      string `json:"status"`
+	DateCreated string `json:"dateCreated"`
+}
+
+type EventTagEmptyLabels struct {
+	ActiveTitle     string `json:"activeTitle"`
+	ActiveMessage   string `json:"activeMessage"`
+	InactiveTitle   string `json:"inactiveTitle"`
+	InactiveMessage string `json:"inactiveMessage"`
+}
+
+type EventTagFormLabels struct {
+	Name                   string `json:"name"`
+	NamePlaceholder        string `json:"namePlaceholder"`
+	Description            string `json:"description"`
+	DescriptionPlaceholder string `json:"descriptionPlaceholder"`
+	Color                  string `json:"color"`
+	ColorPlaceholder       string `json:"colorPlaceholder"`
+	Active                 string `json:"active"`
+}
+
+type EventTagActionLabels struct {
+	View       string `json:"view"`
+	Edit       string `json:"edit"`
+	Delete     string `json:"delete"`
+	Activate   string `json:"activate"`
+	Deactivate string `json:"deactivate"`
 }
 
 // ---------------------------------------------------------------------------

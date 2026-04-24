@@ -18,6 +18,7 @@ import (
 	eventaction "github.com/erniealice/cyta-golang/views/event/action"
 	eventcalendar "github.com/erniealice/cyta-golang/views/event/calendar"
 	eventdetail "github.com/erniealice/cyta-golang/views/event/detail"
+	eventform "github.com/erniealice/cyta-golang/views/event/form"
 	eventlist "github.com/erniealice/cyta-golang/views/event/list"
 )
 
@@ -46,6 +47,15 @@ type ModuleDeps struct {
 
 	// Occurrence operations
 	ListEventOccurrences func(ctx context.Context, req *eventoccurrencepb.ListEventOccurrencesRequest) (*eventoccurrencepb.ListEventOccurrencesResponse, error)
+
+	// Phase 4 — drawer pickers (all nillable; degrade gracefully when nil)
+	ListEventTags             func(ctx context.Context) ([]eventform.Option, error)
+	ListEventTagsForEvent     func(ctx context.Context, eventID string) ([]string, error)
+	SearchAttendees           func(ctx context.Context, query string) ([]eventform.Option, error)
+	ListAttendeesForEvent     func(ctx context.Context, eventID string) ([]eventform.SelectedOption, error)
+	SetEventTagAssignments    func(ctx context.Context, eventID string, tagIDs []string) error
+	SyncEventAttendees        func(ctx context.Context, eventID string, attendeeRefs []string) error
+	ListEventAttachments      func(ctx context.Context, eventID string) ([]eventform.Attachment, error)
 }
 
 // Module holds all constructed event views.
@@ -75,16 +85,25 @@ func NewModule(deps *ModuleDeps) *Module {
 		ListEventResources:   deps.ListEventResources,
 		ListEventProducts:    deps.ListEventProducts,
 		ListEventOccurrences: deps.ListEventOccurrences,
+		ListEventAttachments: deps.ListEventAttachments,
 	}
 
 	actionDeps := &eventaction.Deps{
-		Routes:      deps.Routes,
-		Labels:      deps.Labels,
-		CreateEvent: deps.CreateEvent,
-		ReadEvent:   deps.ReadEvent,
-		UpdateEvent: deps.UpdateEvent,
-		DeleteEvent: deps.DeleteEvent,
-		ListEvents:  deps.ListEvents,
+		Routes:                 deps.Routes,
+		Labels:                 deps.Labels,
+		CommonLabels:           deps.CommonLabels,
+		CreateEvent:            deps.CreateEvent,
+		ReadEvent:              deps.ReadEvent,
+		UpdateEvent:            deps.UpdateEvent,
+		DeleteEvent:            deps.DeleteEvent,
+		ListEvents:             deps.ListEvents,
+		ListEventTags:          deps.ListEventTags,
+		ListEventTagsForEvent:  deps.ListEventTagsForEvent,
+		SearchAttendees:        deps.SearchAttendees,
+		ListAttendeesForEvent:  deps.ListAttendeesForEvent,
+		SetEventTagAssignments: deps.SetEventTagAssignments,
+		SyncEventAttendees:     deps.SyncEventAttendees,
+		ListEventAttachments:   deps.ListEventAttachments,
 	}
 
 	return &Module{

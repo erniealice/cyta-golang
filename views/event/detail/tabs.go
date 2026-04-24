@@ -422,6 +422,25 @@ func buildOccurrencesTable(
 }
 
 // ---------------------------------------------------------------------------
+// Attachments tab — Phase 5 (reuses polymorphic document.Attachment with
+// module_key="event"). Renders a flat list (not the table component) so we
+// can show file-icon + download anchor per row.
+// ---------------------------------------------------------------------------
+
+func loadAttachmentsTab(ctx context.Context, deps *DetailViewDeps, pageData *PageData, eventID string) {
+	if deps.ListEventAttachments == nil {
+		// No backing — leave Attachments nil; the template renders empty state.
+		return
+	}
+	rows, err := deps.ListEventAttachments(ctx, eventID)
+	if err != nil {
+		log.Printf("Failed to list attachments for event %s: %v", eventID, err)
+		return
+	}
+	pageData.Attachments = rows
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 

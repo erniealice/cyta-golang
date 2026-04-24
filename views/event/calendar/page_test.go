@@ -280,3 +280,97 @@ func TestPositionWeekEvent_ZeroDuration(t *testing.T) {
 		t.Error("IsCompact should be true for zero-duration event")
 	}
 }
+
+// ---------------------------------------------------------------------------
+// suggestServerTime tests — mirrors window.lf.calendar.suggestStartTime
+// ---------------------------------------------------------------------------
+
+func TestSuggestServerTime(t *testing.T) {
+	loc := time.UTC
+	today := time.Date(2026, time.March, 15, 0, 0, 0, 0, loc)
+	yesterday := today.AddDate(0, 0, -1)
+	tomorrow := today.AddDate(0, 0, 1)
+
+	tests := []struct {
+		name string
+		day  time.Time
+		now  time.Time
+		want string
+	}{
+		{
+			name: "past day returns 09:00",
+			day:  yesterday,
+			now:  time.Date(2026, time.March, 15, 14, 37, 0, 0, loc),
+			want: "09:00",
+		},
+		{
+			name: "future day returns 09:00",
+			day:  tomorrow,
+			now:  time.Date(2026, time.March, 15, 14, 37, 0, 0, loc),
+			want: "09:00",
+		},
+		{
+			name: "today at 10:07 rounds up to 10:30",
+			day:  today,
+			now:  time.Date(2026, time.March, 15, 10, 7, 0, 0, loc),
+			want: "10:30",
+		},
+		{
+			name: "today at 10:30 stays (already half-hour aligned ≤30)",
+			day:  today,
+			now:  time.Date(2026, time.March, 15, 10, 30, 0, 0, loc),
+			want: "10:30",
+		},
+		{
+			name: "today at 10:31 rounds up to 11:00",
+			day:  today,
+			now:  time.Date(2026, time.March, 15, 10, 31, 0, 0, loc),
+			want: "11:00",
+		},
+		{
+			name: "today at 10:00 stays on the hour",
+			day:  today,
+			now:  time.Date(2026, time.March, 15, 10, 0, 0, 0, loc),
+			want: "10:00",
+		},
+		{
+			name: "today past business-hours end (19:45) returns 09:00",
+			day:  today,
+			now:  time.Date(2026, time.March, 15, 19, 45, 0, 0, loc),
+			want: "09:00",
+		},
+		{
+			name: "today exactly 18:00 returns 09:00 (end is exclusive)",
+			day:  today,
+			now:  time.Date(2026, time.March, 15, 18, 0, 0, 0, loc),
+			want: "09:00",
+		},
+		{
+			name: "today at 07:30 (before business) returns 09:00",
+			day:  today,
+			now:  time.Date(2026, time.March, 15, 7, 30, 0, 0, loc),
+			want: "09:00",
+		},
+		{
+			name: "today at 09:00 returns 09:00",
+			day:  today,
+			now:  time.Date(2026, time.March, 15, 9, 0, 0, 0, loc),
+			want: "09:00",
+		},
+		{
+			name: "today at 17:45 rounds up to 18:00 then falls back to 09:00",
+			day:  today,
+			now:  time.Date(2026, time.March, 15, 17, 45, 0, 0, loc),
+			want: "09:00",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := suggestServerTime(tt.day, tt.now)
+			if got != tt.want {
+				t.Errorf("suggestServerTime(%v, %v) = %q, want %q", tt.day, tt.now, got, tt.want)
+			}
+		})
+	}
+}

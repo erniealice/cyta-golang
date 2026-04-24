@@ -4,14 +4,18 @@ import (
 	"net/http"
 	"testing"
 
+	eventform "github.com/erniealice/cyta-golang/views/event/form"
 	eventpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event"
 )
 
 // ---------------------------------------------------------------------------
-// eventStatusToEnum tests
+// form.StatusFromString tests — moved from local eventStatusToEnum in
+// Phase 4 of the event-management epic. Empty/unknown values default to
+// TENTATIVE (matching the proto's implicit "needs confirmation" lifecycle
+// state) rather than UNSPECIFIED — a deliberate behavior change.
 // ---------------------------------------------------------------------------
 
-func TestEventStatusToEnum(t *testing.T) {
+func TestStatusFromString(t *testing.T) {
 	tests := []struct {
 		input string
 		want  eventpb.EventStatus
@@ -19,16 +23,16 @@ func TestEventStatusToEnum(t *testing.T) {
 		{"tentative", eventpb.EventStatus_EVENT_STATUS_TENTATIVE},
 		{"confirmed", eventpb.EventStatus_EVENT_STATUS_CONFIRMED},
 		{"cancelled", eventpb.EventStatus_EVENT_STATUS_CANCELLED},
-		{"", eventpb.EventStatus_EVENT_STATUS_UNSPECIFIED},
-		{"unknown", eventpb.EventStatus_EVENT_STATUS_UNSPECIFIED},
-		{"CONFIRMED", eventpb.EventStatus_EVENT_STATUS_UNSPECIFIED}, // case-sensitive
+		{"", eventpb.EventStatus_EVENT_STATUS_TENTATIVE},
+		{"unknown", eventpb.EventStatus_EVENT_STATUS_TENTATIVE},
+		{"CONFIRMED", eventpb.EventStatus_EVENT_STATUS_TENTATIVE}, // case-sensitive
 	}
 
 	for _, tt := range tests {
 		t.Run("status_"+tt.input, func(t *testing.T) {
-			got := eventStatusToEnum(tt.input)
+			got := eventform.StatusFromString(tt.input)
 			if got != tt.want {
-				t.Errorf("eventStatusToEnum(%q) = %v, want %v", tt.input, got, tt.want)
+				t.Errorf("StatusFromString(%q) = %v, want %v", tt.input, got, tt.want)
 			}
 		})
 	}
@@ -138,25 +142,27 @@ func TestHtmxError(t *testing.T) {
 // Negative / defensive helper tests
 // ---------------------------------------------------------------------------
 
-func TestEventStatusToEnum_MissingAndInvalid(t *testing.T) {
+func TestStatusFromString_MissingAndInvalid(t *testing.T) {
+	// Post-Phase-4: any unrecognized input → TENTATIVE (lifecycle's safe
+	// default), never UNSPECIFIED. Case-sensitive on the three known values.
 	tests := []struct {
 		name  string
 		input string
 		want  eventpb.EventStatus
 	}{
-		{"whitespace only", "   ", eventpb.EventStatus_EVENT_STATUS_UNSPECIFIED},
-		{"numeric", "123", eventpb.EventStatus_EVENT_STATUS_UNSPECIFIED},
-		{"partial match", "confirm", eventpb.EventStatus_EVENT_STATUS_UNSPECIFIED},
-		{"with trailing space", "confirmed ", eventpb.EventStatus_EVENT_STATUS_UNSPECIFIED},
-		{"null string", "null", eventpb.EventStatus_EVENT_STATUS_UNSPECIFIED},
-		{"special chars", "confirmed;DROP TABLE", eventpb.EventStatus_EVENT_STATUS_UNSPECIFIED},
+		{"whitespace only", "   ", eventpb.EventStatus_EVENT_STATUS_TENTATIVE},
+		{"numeric", "123", eventpb.EventStatus_EVENT_STATUS_TENTATIVE},
+		{"partial match", "confirm", eventpb.EventStatus_EVENT_STATUS_TENTATIVE},
+		{"with trailing space", "confirmed ", eventpb.EventStatus_EVENT_STATUS_TENTATIVE},
+		{"null string", "null", eventpb.EventStatus_EVENT_STATUS_TENTATIVE},
+		{"special chars", "confirmed;DROP TABLE", eventpb.EventStatus_EVENT_STATUS_TENTATIVE},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := eventStatusToEnum(tt.input)
+			got := eventform.StatusFromString(tt.input)
 			if got != tt.want {
-				t.Errorf("eventStatusToEnum(%q) = %v, want %v", tt.input, got, tt.want)
+				t.Errorf("StatusFromString(%q) = %v, want %v", tt.input, got, tt.want)
 			}
 		})
 	}

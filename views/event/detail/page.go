@@ -6,6 +6,7 @@ import (
 	"log"
 
 	cyta "github.com/erniealice/cyta-golang"
+	eventform "github.com/erniealice/cyta-golang/views/event/form"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 
 	pyeza "github.com/erniealice/pyeza-golang"
@@ -28,6 +29,10 @@ type PageData struct {
 	ResourcesTable   *types.TableConfig
 	ProductsTable    *types.TableConfig
 	OccurrencesTable *types.TableConfig
+	// Phase 5 — attachments tab is rendered from a flat list (rather than
+	// the standard table component) since attachments have a download link
+	// rather than row actions. Empty slice ⇒ tab shows the empty state.
+	Attachments []eventform.Attachment
 }
 
 // eventToMap converts an Event protobuf to a map[string]any for template use.
@@ -155,6 +160,7 @@ func buildTabItems(l cyta.EventLabels, id string, routes cyta.EventRoutes) []pye
 		{Key: "resources", Label: l.Tabs.Resources, Href: base + "?tab=resources", HxGet: action + "resources", Icon: "icon-box"},
 		{Key: "product", Label: l.Tabs.Products, Href: base + "?tab=products", HxGet: action + "product", Icon: "icon-tag"},
 		{Key: "occurrences", Label: l.Tabs.Occurrences, Href: base + "?tab=occurrences", HxGet: action + "occurrences", Icon: "icon-repeat"},
+		{Key: "attachments", Label: l.Form.Attachments, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
 	}
 }
 
@@ -171,6 +177,8 @@ func loadTabData(ctx context.Context, deps *DetailViewDeps, pageData *PageData, 
 		loadProductsTab(ctx, deps, pageData, id)
 	case "occurrences":
 		loadOccurrencesTab(ctx, deps, pageData, id)
+	case "attachments":
+		loadAttachmentsTab(ctx, deps, pageData, id)
 	}
 }
 

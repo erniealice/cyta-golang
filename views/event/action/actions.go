@@ -5,45 +5,55 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	cyta "github.com/erniealice/cyta-golang"
+	cytaeventform "github.com/erniealice/cyta-golang/views/event/form"
 
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/view"
 
 	eventpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event"
+	pyeza "github.com/erniealice/pyeza-golang"
 )
 
-// FormData is the template data for the event drawer form.
-type FormData struct {
-	FormAction   string
-	IsEdit       bool
-	ID           string
-	Name         string
-	Description  string
-	StartDate    string
-	EndDate      string
-	Timezone     string
-	AllDay       bool
-	OrganizerID  string
-	LocationID   string
-	Status       eventpb.EventStatus
-	Labels       cyta.EventLabels
-	CommonLabels any
-}
-
 // Deps holds dependencies for event action handlers.
+//
+// The classic CRUD funcs are unchanged. The new fields (ListEventTags,
+// SearchAttendees, SetEventTagAssignments, SyncEventAttendees, ListAttachments)
+// are nillable — when nil the corresponding feature degrades gracefully so the
+// drawer still renders for environments where the espyna wiring isn't complete.
 type Deps struct {
-	Routes      cyta.EventRoutes
-	Labels      cyta.EventLabels
+	Routes       cyta.EventRoutes
+	Labels       cyta.EventLabels
+	CommonLabels pyeza.CommonLabels
+
+	// Core event CRUD
 	CreateEvent func(ctx context.Context, req *eventpb.CreateEventRequest) (*eventpb.CreateEventResponse, error)
 	ReadEvent   func(ctx context.Context, req *eventpb.ReadEventRequest) (*eventpb.ReadEventResponse, error)
 	UpdateEvent func(ctx context.Context, req *eventpb.UpdateEventRequest) (*eventpb.UpdateEventResponse, error)
 	DeleteEvent func(ctx context.Context, req *eventpb.DeleteEventRequest) (*eventpb.DeleteEventResponse, error)
 	ListEvents  func(ctx context.Context, req *eventpb.ListEventsRequest) (*eventpb.ListEventsResponse, error)
+
+	// Phase 4 additions — pickers + sync
+	// All return ([]form.Option, ...) shaped lists so the templates don't
+	// need to know about proto types. Wired by block.go.
+	ListEventTags             func(ctx context.Context) ([]cytaeventform.Option, error)
+	ListEventTagsForEvent     func(ctx context.Context, eventID string) ([]string, error) // assigned tag IDs
+	SearchAttendees           func(ctx context.Context, query string) ([]cytaeventform.Option, error)
+	ListAttendeesForEvent     func(ctx context.Context, eventID string) ([]cytaeventform.SelectedOption, error)
+	SetEventTagAssignments    func(ctx context.Context, eventID string, tagIDs []string) error
+	SyncEventAttendees        func(ctx context.Context, eventID string, attendeeRefs []string) error
+	ListEventAttachments      func(ctx context.Context, eventID string) ([]cytaeventform.Attachment, error)
 }
 
 // NewAddAction creates the event add action (GET = form, POST = create).
+//
+// Query params on GET: ?date=YYYY-MM-DD&at=HH:MM (set by the calendar
+// popover; pre-seeds the start fields). When absent, start defaults to the
+// next-half-hour-from-now logic in the JS.
+//
+// POST is delegated to the unified save handler in handlers_save.go.
 func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
@@ -52,50 +62,30 @@ func NewAddAction(deps *Deps) view.View {
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
-			return view.OK("event-drawer-form", &FormData{
-				FormAction:   deps.Routes.AddURL,
-				Labels:       deps.Labels,
-				CommonLabels: nil, // injected by ViewAdapter
+			date := viewCtx.Request.URL.Query().Get("date")
+			at := viewCtx.Request.URL.Query().Get("at")
+
+			startDate, startTime := seedStartFromQuery(date, at, time.Now())
+			endDate, endTime := defaultEnd(startDate, startTime)
+
+			tagOptions := safeListTags(ctx, deps)
+
+			return view.OK("event-drawer-form", &cytaeventform.Data{
+				FormAction:    deps.Routes.AddURL,
+				StartDate:     startDate,
+				StartTime:     startTime,
+				EndDate:       endDate,
+				EndTime:       endTime,
+				StatusOptions: cytaeventform.BuildStatusOptions(deps.Labels.Status, eventpb.EventStatus_EVENT_STATUS_TENTATIVE),
+				TagOptions:    tagOptions,
+				// AttendeeOptions empty — populated client-side by the multi-select search hook.
+				Labels:       cytaeventform.LabelsFromEvent(deps.Labels.Form),
+				CommonLabels: deps.CommonLabels,
 			})
 		}
 
-		// POST — create event
-		if err := viewCtx.Request.ParseForm(); err != nil {
-			return htmxError("Invalid form data")
-		}
-
-		r := viewCtx.Request
-
-		resp, err := deps.CreateEvent(ctx, &eventpb.CreateEventRequest{
-			Data: &eventpb.Event{
-				Name:        r.FormValue("name"),
-				Description: strPtr(r.FormValue("description")),
-				Timezone:    r.FormValue("timezone"),
-				OrganizerId: strPtr(r.FormValue("organizer_id")),
-				LocationId:  strPtr(r.FormValue("location_id")),
-				Status:      eventpb.EventStatus_EVENT_STATUS_TENTATIVE,
-			},
-		})
-		if err != nil {
-			log.Printf("Failed to create event: %v", err)
-			return htmxError(err.Error())
-		}
-
-		newID := ""
-		if respData := resp.GetData(); len(respData) > 0 {
-			newID = respData[0].GetId()
-		}
-		if newID != "" {
-			return view.ViewResult{
-				StatusCode: http.StatusOK,
-				Headers: map[string]string{
-					"HX-Trigger":  `{"formSuccess":true}`,
-					"HX-Redirect": route.ResolveURL(deps.Routes.DetailURL, "id", newID),
-				},
-			}
-		}
-
-		return htmxSuccess("events-table")
+		// POST — delegate to save handler
+		return handleSave(ctx, viewCtx, deps, "" /* no existing id */)
 	})
 }
 
@@ -123,55 +113,45 @@ func NewEditAction(deps *Deps) view.View {
 			}
 			record := readData[0]
 
-			return view.OK("event-drawer-form", &FormData{
-				FormAction:   route.ResolveURL(deps.Routes.EditURL, "id", id),
-				IsEdit:       true,
-				ID:           id,
-				Name:         record.GetName(),
-				Description:  record.GetDescription(),
-				Timezone:     record.GetTimezone(),
-				AllDay:       record.GetAllDay(),
-				OrganizerID:  record.GetOrganizerId(),
-				LocationID:   record.GetLocationId(),
-				Status:       record.GetStatus(),
-				Labels:       deps.Labels,
-				CommonLabels: nil, // injected by ViewAdapter
+			startDate, startTime := splitTimestamp(record.GetStartDateTimeUtc())
+			endDate, endTime := splitTimestamp(record.GetEndDateTimeUtc())
+
+			tagOptions := safeListTags(ctx, deps)
+			selectedTagIDs := safeListTagIDsForEvent(ctx, deps, id)
+			markSelectedTags(tagOptions, selectedTagIDs)
+
+			selectedAttendees := safeListAttendees(ctx, deps, id)
+			attachments := safeListAttachments(ctx, deps, id)
+
+			return view.OK("event-drawer-form", &cytaeventform.Data{
+				FormAction:        route.ResolveURL(deps.Routes.EditURL, "id", id),
+				IsEdit:            true,
+				ID:                id,
+				Name:              record.GetName(),
+				Notes:             record.GetDescription(),
+				StartDate:         startDate,
+				StartTime:         startTime,
+				EndDate:           endDate,
+				EndTime:           endTime,
+				Timezone:          record.GetTimezone(),
+				AllDay:            record.GetAllDay(),
+				StatusOptions:     cytaeventform.BuildStatusOptions(deps.Labels.Status, record.GetStatus()),
+				TagOptions:        tagOptions,
+				SelectedTags:      buildSelectedFromOptions(tagOptions, selectedTagIDs),
+				AttendeeOptions:   nil, // edit mode shows existing as chips; new searches via client-side
+				SelectedAttendees: selectedAttendees,
+				Attachments:       attachments,
+				Labels:            cytaeventform.LabelsFromEvent(deps.Labels.Form),
+				CommonLabels:      deps.CommonLabels,
 			})
 		}
 
-		// POST — update event
-		if err := viewCtx.Request.ParseForm(); err != nil {
-			return htmxError("Invalid form data")
-		}
-
-		r := viewCtx.Request
-
-		_, err := deps.UpdateEvent(ctx, &eventpb.UpdateEventRequest{
-			Data: &eventpb.Event{
-				Id:          id,
-				Name:        r.FormValue("name"),
-				Description: strPtr(r.FormValue("description")),
-				Timezone:    r.FormValue("timezone"),
-				OrganizerId: strPtr(r.FormValue("organizer_id")),
-				LocationId:  strPtr(r.FormValue("location_id")),
-			},
-		})
-		if err != nil {
-			log.Printf("Failed to update event %s: %v", id, err)
-			return htmxError(err.Error())
-		}
-
-		return view.ViewResult{
-			StatusCode: http.StatusOK,
-			Headers: map[string]string{
-				"HX-Trigger":  `{"formSuccess":true}`,
-				"HX-Redirect": route.ResolveURL(deps.Routes.DetailURL, "id", id),
-			},
-		}
+		// POST — delegate to save handler
+		return handleSave(ctx, viewCtx, deps, id)
 	})
 }
 
-// NewDeleteAction creates the event delete action (POST only).
+// NewDeleteAction — unchanged from the previous implementation.
 func NewDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
@@ -200,7 +180,7 @@ func NewDeleteAction(deps *Deps) view.View {
 	})
 }
 
-// NewBulkDeleteAction creates the event bulk delete action (POST only).
+// NewBulkDeleteAction — unchanged.
 func NewBulkDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
@@ -228,7 +208,7 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 	})
 }
 
-// NewSetStatusAction creates the event status update action (POST only).
+// NewSetStatusAction — unchanged.
 func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
@@ -251,7 +231,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 			return htmxError("Status is required")
 		}
 
-		statusEnum := eventStatusToEnum(targetStatus)
+		statusEnum := cytaeventform.StatusFromString(targetStatus)
 
 		_, err := deps.UpdateEvent(ctx, &eventpb.UpdateEventRequest{
 			Data: &eventpb.Event{Id: id, Status: statusEnum},
@@ -265,7 +245,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 	})
 }
 
-// NewBulkSetStatusAction creates the event bulk status update action (POST only).
+// NewBulkSetStatusAction — unchanged.
 func NewBulkSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
@@ -285,7 +265,7 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 			return htmxError("Target status is required")
 		}
 
-		statusEnum := eventStatusToEnum(targetStatus)
+		statusEnum := cytaeventform.StatusFromString(targetStatus)
 
 		for _, id := range ids {
 			if _, err := deps.UpdateEvent(ctx, &eventpb.UpdateEventRequest{
@@ -308,20 +288,6 @@ func strPtr(s string) *string {
 	return &s
 }
 
-// eventStatusToEnum converts a status string to the protobuf EventStatus enum.
-func eventStatusToEnum(status string) eventpb.EventStatus {
-	switch status {
-	case "tentative":
-		return eventpb.EventStatus_EVENT_STATUS_TENTATIVE
-	case "confirmed":
-		return eventpb.EventStatus_EVENT_STATUS_CONFIRMED
-	case "cancelled":
-		return eventpb.EventStatus_EVENT_STATUS_CANCELLED
-	default:
-		return eventpb.EventStatus_EVENT_STATUS_UNSPECIFIED
-	}
-}
-
 // htmxSuccess returns a header-only response that signals the sheet to close and table to refresh.
 func htmxSuccess(tableID string) view.ViewResult {
 	return view.ViewResult{
@@ -340,4 +306,150 @@ func htmxError(message string) view.ViewResult {
 			"HX-Error-Message": message,
 		},
 	}
+}
+
+// safeListTags wraps deps.ListEventTags with a nil check.
+func safeListTags(ctx context.Context, deps *Deps) []cytaeventform.Option {
+	if deps.ListEventTags == nil {
+		return nil
+	}
+	tags, err := deps.ListEventTags(ctx)
+	if err != nil {
+		log.Printf("ListEventTags failed: %v", err)
+		return nil
+	}
+	return tags
+}
+
+func safeListTagIDsForEvent(ctx context.Context, deps *Deps, eventID string) []string {
+	if deps.ListEventTagsForEvent == nil {
+		return nil
+	}
+	ids, err := deps.ListEventTagsForEvent(ctx, eventID)
+	if err != nil {
+		log.Printf("ListEventTagsForEvent failed: %v", err)
+		return nil
+	}
+	return ids
+}
+
+func safeListAttendees(ctx context.Context, deps *Deps, eventID string) []cytaeventform.SelectedOption {
+	if deps.ListAttendeesForEvent == nil {
+		return nil
+	}
+	out, err := deps.ListAttendeesForEvent(ctx, eventID)
+	if err != nil {
+		log.Printf("ListAttendeesForEvent failed: %v", err)
+		return nil
+	}
+	return out
+}
+
+func safeListAttachments(ctx context.Context, deps *Deps, eventID string) []cytaeventform.Attachment {
+	if deps.ListEventAttachments == nil {
+		return nil
+	}
+	out, err := deps.ListEventAttachments(ctx, eventID)
+	if err != nil {
+		log.Printf("ListEventAttachments failed: %v", err)
+		return nil
+	}
+	return out
+}
+
+// markSelectedTags flips Option.Selected for any option whose Value is in selectedIDs.
+func markSelectedTags(opts []cytaeventform.Option, selectedIDs []string) {
+	if len(opts) == 0 || len(selectedIDs) == 0 {
+		return
+	}
+	set := make(map[string]struct{}, len(selectedIDs))
+	for _, id := range selectedIDs {
+		set[id] = struct{}{}
+	}
+	for i := range opts {
+		if _, ok := set[opts[i].Value]; ok {
+			opts[i].Selected = true
+		}
+	}
+}
+
+// buildSelectedFromOptions returns the {Value, Label} pairs for the supplied
+// IDs in the same order as the master option list (so chip ordering matches
+// the dropdown's natural ordering).
+func buildSelectedFromOptions(opts []cytaeventform.Option, selectedIDs []string) []cytaeventform.SelectedOption {
+	if len(opts) == 0 || len(selectedIDs) == 0 {
+		return nil
+	}
+	wanted := make(map[string]struct{}, len(selectedIDs))
+	for _, id := range selectedIDs {
+		wanted[id] = struct{}{}
+	}
+	var out []cytaeventform.SelectedOption
+	for _, o := range opts {
+		if _, ok := wanted[o.Value]; ok {
+			out = append(out, cytaeventform.SelectedOption{Value: o.Value, Label: o.Label})
+		}
+	}
+	return out
+}
+
+// seedStartFromQuery parses ?date=YYYY-MM-DD&at=HH:MM into form-friendly strings.
+// Falls back to today + next half-hour-from-now if either is missing.
+func seedStartFromQuery(date, at string, now time.Time) (string, string) {
+	if date == "" {
+		date = now.Format("2006-01-02")
+	}
+	if at == "" {
+		at = nextHalfHour(now)
+	}
+	return date, at
+}
+
+// defaultEnd = start + 60 min, mirrored across midnight if needed.
+func defaultEnd(startDate, startTime string) (string, string) {
+	if startDate == "" || startTime == "" {
+		return "", ""
+	}
+	t, err := time.Parse("2006-01-02 15:04", startDate+" "+startTime)
+	if err != nil {
+		return startDate, ""
+	}
+	end := t.Add(60 * time.Minute)
+	return end.Format("2006-01-02"), end.Format("15:04")
+}
+
+// nextHalfHour returns the next half-hour boundary ≥ now ("HH:MM" 24h).
+// Caps at 18:00; past business hours falls back to "09:00".
+func nextHalfHour(now time.Time) string {
+	h, m := now.Hour(), now.Minute()
+	if m == 0 || m == 30 {
+		// already on a boundary — push one half-hour to ensure ≥ now
+		m += 30
+	} else if m < 30 {
+		m = 30
+	} else {
+		h++
+		m = 0
+	}
+	if h >= 18 {
+		return "09:00"
+	}
+	if h < 9 {
+		return "09:00"
+	}
+	if m == 60 {
+		h++
+		m = 0
+	}
+	return fmt.Sprintf("%02d:%02d", h, m)
+}
+
+// splitTimestamp converts a UTC unix-millis timestamp into ("YYYY-MM-DD", "HH:MM").
+// Returns empty strings for zero/invalid input.
+func splitTimestamp(ms int64) (string, string) {
+	if ms == 0 {
+		return "", ""
+	}
+	t := time.UnixMilli(ms)
+	return t.Format("2006-01-02"), t.Format("15:04")
 }

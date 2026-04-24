@@ -24,4 +24,11 @@ const (
 	RecurrenceAddURL    = "/action/schedule/recurrence/add"
 	RecurrenceEditURL   = "/action/schedule/recurrence/edit/{id}"
 	RecurrenceDeleteURL = "/action/schedule/recurrence/delete"
+
+	// Event tag routes
+	EventTagListURL   = "/app/schedule/tags"
+	EventTagDetailURL = "/app/schedule/tags/detail/{id}"
+	EventTagAddURL    = "/action/schedule/tag/add"
+	EventTagEditURL   = "/action/schedule/tag/edit/{id}"
+	EventTagDeleteURL = "/action/schedule/tag/delete/{id}"
 )

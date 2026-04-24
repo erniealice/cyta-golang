@@ -1,0 +1,49 @@
+{{/*
+================================================================================
+EVENT-ATTACHMENT-ZONE — drop zone partial inside the event drawer
+================================================================================
+Phase 5 of event-management epic. Reuses the polymorphic document.Attachment
+entity (module_key="event", foreign_key=event.id) — no new entity needed.
+
+Add mode: drop zone collects files in a hidden FileList; on save, the unified
+handler uploads them after the event row is created (so foreign_key resolves).
+
+Edit mode: shows existing attachments above the drop zone with a remove
+button. Drop zone uploads new files immediately to the existing event ID.
+
+Param schema (dict from event-drawer-form.html):
+  Label    string         — section heading ("Attachments")
+  Hint     string         — small text below the drop zone
+  Existing []Attachment   — existing rows (Phase 5: list rendered for edit)
+  EventID  string         — empty in add mode
+
+The actual upload wiring is owned by handlers_save.go (Phase 4) +
+hybra-golang/views/attachment/handler.go (Phase 5).
+================================================================================
+*/}}
+{{define "event-attachment-zone"}}
+<div class="form-group event-attachment-zone" data-event-attachments {{if .EventID}}data-event-id="{{.EventID}}"{{end}}>
+    <span class="form-label">{{if .Label}}{{.Label}}{{else}}Attachments{{end}}</span>
+
+    {{if .Existing}}
+    <ul class="event-attachment-list" role="list">
+        {{range .Existing}}
+        <li class="event-attachment-row" data-attachment-id="{{.ID}}">
+            <a href="{{.URL}}" class="event-attachment-link" target="_blank" rel="noopener">
+                <span class="event-attachment-name">{{.Filename}}</span>
+                <span class="event-attachment-meta">{{.SizeKB}} KB</span>
+            </a>
+            <button type="button" class="event-attachment-remove" data-attachment-remove="{{.ID}}" aria-label="Remove {{.Filename}}">&times;</button>
+        </li>
+        {{end}}
+    </ul>
+    {{end}}
+
+    <label class="event-attachment-dropzone" tabindex="0">
+        <input type="file" name="attachment_files" multiple class="event-attachment-input">
+        <span class="event-attachment-dropzone-label">
+            {{if .Hint}}{{.Hint}}{{else}}Drop files or click to upload{{end}}
+        </span>
+    </label>
+</div>
+{{end}}

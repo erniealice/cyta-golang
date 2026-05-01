@@ -14,6 +14,7 @@ import (
 	"strconv"
 
 	espynahttp "github.com/erniealice/espyna-golang/contrib/http"
+	"github.com/erniealice/espyna-golang/tableparams"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
@@ -43,10 +44,6 @@ type PageData struct {
 	Table           *types.TableConfig
 }
 
-var eventTagAllowedSortCols = []string{
-	"date_created", "name",
-}
-
 var eventTagSearchFields = []string{"name", "description"}
 
 // NewView creates the event-tag list view (full page).
@@ -54,12 +51,13 @@ func NewView(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		status := parseStatus(viewCtx)
 
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, eventTagAllowedSortCols)
+		columns := eventTagColumns(deps.Labels)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "name", "asc")
 		if err != nil {
 			return view.Error(err)
 		}
 
-		tableConfig, err := buildTableConfig(ctx, deps, status, p)
+		tableConfig, err := buildTableConfig(ctx, deps, status, p, columns)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -104,7 +102,7 @@ func parseStatus(viewCtx *view.ViewContext) string {
 }
 
 // buildTableConfig fetches event-tag data and builds the table configuration.
-func buildTableConfig(ctx context.Context, deps *Deps, status string, p espynahttp.TableQueryParams) (*types.TableConfig, error) {
+func buildTableConfig(ctx context.Context, deps *Deps, status string, p tableparams.TableQueryParams, columns []types.TableColumn) (*types.TableConfig, error) {
 	perms := view.GetUserPermissions(ctx)
 
 	listParams := espynahttp.ToListParams(p, eventTagSearchFields)
@@ -145,7 +143,6 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string, p espynaht
 	}
 
 	l := deps.Labels
-	columns := eventTagColumns(l)
 	rows := buildTableRows(resp.GetEventTagList(), l, deps.Routes, inUseIDs, perms)
 	types.ApplyColumnStyles(columns, rows)
 
@@ -211,11 +208,11 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string, p espynaht
 
 func eventTagColumns(l cyta.EventTagLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "name", Label: l.Columns.Name, Sortable: true, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "9.375rem"},
-		{Key: "description", Label: l.Columns.Description, Sortable: false, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "9.375rem"},
-		{Key: "color", Label: l.Columns.Color, Sortable: false, WidthClass: "col-3xl"},
-		{Key: "status", Label: l.Columns.Status, Sortable: false, WidthClass: "col-2xl"},
-		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, Filterable: true, FilterType: types.FilterTypeDate, WidthClass: "col-6xl"},
+		{Key: "name", Label: l.Columns.Name, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "9.375rem"},
+		{Key: "description", Label: l.Columns.Description, NoSort: true, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "9.375rem"},
+		{Key: "color", Label: l.Columns.Color, NoSort: true, WidthClass: "col-3xl"},
+		{Key: "status", Label: l.Columns.Status, NoSort: true, WidthClass: "col-2xl"},
+		{Key: "date_created", Label: l.Columns.DateCreated, Filterable: true, FilterType: types.FilterTypeDate, WidthClass: "col-6xl"},
 	}
 }
 

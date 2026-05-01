@@ -112,13 +112,13 @@ func NewView(deps *ListViewDeps) view.View {
 
 func eventColumns(l cyta.EventLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "name", Label: l.Columns.Name, Sortable: true},
-		{Key: "start_date", Label: l.Columns.StartDate, Sortable: true, Width: "150px"},
-		{Key: "end_date", Label: l.Columns.EndDate, Sortable: true, Width: "150px"},
-		{Key: "organizer", Label: l.Columns.Organizer, Sortable: true},
-		{Key: "location", Label: l.Columns.Location, Sortable: true},
-		{Key: "status", Label: l.Columns.Status, Sortable: true, Width: "130px"},
-		{Key: "recurs", Label: l.Columns.Recurs, Sortable: false, Width: "80px"},
+		{Key: "name", Label: l.Columns.Name},
+		{Key: "start_date", Label: l.Columns.StartDate, Width: "150px"},
+		{Key: "end_date", Label: l.Columns.EndDate, Width: "150px"},
+		{Key: "organizer", Label: l.Columns.Organizer},
+		{Key: "location", Label: l.Columns.Location},
+		{Key: "status", Label: l.Columns.Status, Width: "130px"},
+		{Key: "recurs", Label: l.Columns.Recurs, NoSort: true, Width: "80px"},
 	}
 }
 

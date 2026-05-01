@@ -47,9 +47,9 @@ func buildAttendeesTable(
 	tableLabels types.TableLabels,
 ) *types.TableConfig {
 	columns := []types.TableColumn{
-		{Key: "name", Label: l.Columns.Name, Sortable: true},
-		{Key: "role", Label: l.Detail.Overview, Sortable: true, Width: "120px"},
-		{Key: "status", Label: l.Columns.Status, Sortable: true, Width: "120px"},
+		{Key: "name", Label: l.Columns.Name},
+		{Key: "role", Label: l.Detail.Overview, Width: "120px"},
+		{Key: "status", Label: l.Columns.Status, Width: "120px"},
 	}
 
 	rows := []types.TableRow{}
@@ -167,9 +167,9 @@ func buildResourcesTable(
 	tableLabels types.TableLabels,
 ) *types.TableConfig {
 	columns := []types.TableColumn{
-		{Key: "name", Label: l.Columns.Name, Sortable: true},
-		{Key: "type", Label: l.Detail.Overview, Sortable: true, Width: "120px"},
-		{Key: "status", Label: l.Columns.Status, Sortable: true, Width: "120px"},
+		{Key: "name", Label: l.Columns.Name},
+		{Key: "type", Label: l.Detail.Overview, Width: "120px"},
+		{Key: "status", Label: l.Columns.Status, Width: "120px"},
 	}
 
 	rows := []types.TableRow{}
@@ -281,10 +281,10 @@ func buildProductsTable(
 	tableLabels types.TableLabels,
 ) *types.TableConfig {
 	columns := []types.TableColumn{
-		{Key: "name", Label: l.Columns.Name, Sortable: true},
-		{Key: "quantity", Label: l.Detail.Overview, Sortable: false, Width: "80px"},
-		{Key: "unit_price", Label: l.Detail.Overview, Sortable: false, Width: "120px"},
-		{Key: "total_price", Label: l.Detail.Overview, Sortable: false, Width: "120px"},
+		{Key: "name", Label: l.Columns.Name},
+		{Key: "quantity", Label: l.Detail.Overview, NoSort: true, Width: "80px"},
+		{Key: "unit_price", Label: l.Detail.Overview, NoSort: true, Width: "120px"},
+		{Key: "total_price", Label: l.Detail.Overview, NoSort: true, Width: "120px"},
 	}
 
 	rows := []types.TableRow{}
@@ -366,10 +366,10 @@ func buildOccurrencesTable(
 	tableLabels types.TableLabels,
 ) *types.TableConfig {
 	columns := []types.TableColumn{
-		{Key: "start_date", Label: l.Columns.StartDate, Sortable: true, Width: "150px"},
-		{Key: "end_date", Label: l.Columns.EndDate, Sortable: true, Width: "150px"},
-		{Key: "exception", Label: l.Detail.Overview, Sortable: false, Width: "100px"},
-		{Key: "cancelled", Label: l.Columns.Status, Sortable: false, Width: "100px"},
+		{Key: "start_date", Label: l.Columns.StartDate, Width: "150px"},
+		{Key: "end_date", Label: l.Columns.EndDate, Width: "150px"},
+		{Key: "exception", Label: l.Detail.Overview, NoSort: true, Width: "100px"},
+		{Key: "cancelled", Label: l.Columns.Status, NoSort: true, Width: "100px"},
 	}
 
 	rows := []types.TableRow{}

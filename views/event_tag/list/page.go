@@ -52,7 +52,7 @@ func NewView(deps *Deps) view.View {
 		status := parseStatus(viewCtx)
 
 		columns := eventTagColumns(deps.Labels)
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "name", "asc")
+		p, err := espynahttp.ParseTableParamsWithFilters(viewCtx.Request, types.SortableKeys(columns), types.FilterableKeys(columns), "name", "asc")
 		if err != nil {
 			return view.Error(err)
 		}

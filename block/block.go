@@ -21,7 +21,7 @@ import (
 	eventmod "github.com/erniealice/cyta-golang/views/event"
 	eventtagmod "github.com/erniealice/cyta-golang/views/event_tag"
 	eventpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event"
-	"github.com/erniealice/espyna-golang/contrib/postgres/reference"
+	"github.com/erniealice/espyna-golang/reference"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 	pyeza "github.com/erniealice/pyeza-golang"
 )
@@ -136,7 +136,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			// Reference-checker for the delete-guard. Optional — if not
 			// wired, the list page simply renders without the in-use tooltip.
 			if ctx.RefChecker != nil {
-				if refChecker, ok := ctx.RefChecker.(*reference.Checker); ok && refChecker != nil {
+				if refChecker, ok := ctx.RefChecker.(reference.Checker); ok && refChecker != nil {
 					eventTagDeps.GetEventTagInUseIDs = refChecker.GetEventTagInUseIDs
 				}
 			}

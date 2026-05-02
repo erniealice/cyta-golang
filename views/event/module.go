@@ -17,6 +17,7 @@ import (
 
 	eventaction "github.com/erniealice/cyta-golang/views/event/action"
 	eventcalendar "github.com/erniealice/cyta-golang/views/event/calendar"
+	eventdashboard "github.com/erniealice/cyta-golang/views/event/dashboard"
 	eventdetail "github.com/erniealice/cyta-golang/views/event/detail"
 	eventform "github.com/erniealice/cyta-golang/views/event/form"
 	eventlist "github.com/erniealice/cyta-golang/views/event/list"
@@ -24,10 +25,12 @@ import (
 
 // ModuleDeps holds all dependencies for the event module.
 type ModuleDeps struct {
-	Routes       cyta.EventRoutes
-	Labels       cyta.EventLabels
-	CommonLabels pyeza.CommonLabels
-	TableLabels  types.TableLabels
+	Routes           cyta.EventRoutes
+	EventTagRoutes   cyta.EventTagRoutes
+	RecurrenceRoutes cyta.RecurrenceRoutes
+	Labels           cyta.EventLabels
+	CommonLabels     pyeza.CommonLabels
+	TableLabels      types.TableLabels
 
 	// Event CRUD
 	CreateEvent func(ctx context.Context, req *eventpb.CreateEventRequest) (*eventpb.CreateEventResponse, error)
@@ -56,6 +59,10 @@ type ModuleDeps struct {
 	SetEventTagAssignments    func(ctx context.Context, eventID string, tagIDs []string) error
 	SyncEventAttendees        func(ctx context.Context, eventID string, attendeeRefs []string) error
 	ListEventAttachments      func(ctx context.Context, eventID string) ([]eventform.Attachment, error)
+
+	// Phase 6 — schedule dashboard read-only projection callback.
+	// Nillable; when nil the dashboard renders empty stats / widgets.
+	GetScheduleDashboardData func(ctx context.Context, req *eventdashboard.Request) (*eventdashboard.Response, error)
 }
 
 // Module holds all constructed event views.
@@ -71,6 +78,7 @@ type Module struct {
 	SetStatus     view.View
 	BulkSetStatus view.View
 	Calendar      view.View
+	Dashboard     view.View
 }
 
 // NewModule creates a new event module with all views wired.
@@ -128,6 +136,14 @@ func NewModule(deps *ModuleDeps) *Module {
 			Labels:       deps.Labels,
 			CommonLabels: deps.CommonLabels,
 		}),
+		Dashboard: eventdashboard.NewView(&eventdashboard.Deps{
+			Routes:           deps.Routes,
+			EventTagRoutes:   deps.EventTagRoutes,
+			RecurrenceRoutes: deps.RecurrenceRoutes,
+			Labels:           deps.Labels,
+			CommonLabels:     deps.CommonLabels,
+			GetDashboardData: deps.GetScheduleDashboardData,
+		}),
 	}
 }
 
@@ -145,4 +161,5 @@ func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
 	r.POST(m.routes.SetStatusURL, m.SetStatus)
 	r.POST(m.routes.BulkSetStatusURL, m.BulkSetStatus)
 	r.GET(m.routes.CalendarURL, m.Calendar)
+	r.GET(m.routes.DashboardURL, m.Dashboard)
 }

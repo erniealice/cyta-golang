@@ -1,0 +1,13 @@
+{{/* Full page — for direct access / non-HTMX */}}
+{{define "schedule-dashboard"}}
+{{template "app-shell" .}}
+{{end}}
+
+{{/* Content-only partial — for HTMX navigation */}}
+{{define "schedule-dashboard-content"}}
+<div class="page-content"
+     data-page-css="/assets/css/cyta/cyta-schedule-dashboard.css?v={{.CacheVersion}}"
+     data-testid="dashboard-schedule">
+    {{template "dashboard" .Dashboard}}
+</div>
+{{end}}

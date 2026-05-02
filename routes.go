@@ -18,6 +18,9 @@ const (
 	CalendarURL     = "/app/schedule/calendar"
 	CalendarDataURL = "/action/schedule/calendar/data"
 
+	// Schedule (event) dashboard route
+	ScheduleDashboardURL = "/app/schedule/dashboard"
+
 	// Recurrence pattern routes
 	RecurrenceListURL   = "/app/schedule/recurrence/list/{status}"
 	RecurrenceDetailURL = "/app/schedule/recurrence/detail/{id}"

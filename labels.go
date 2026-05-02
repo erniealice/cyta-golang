@@ -19,9 +19,37 @@ type EventLabels struct {
 	Detail  EventDetailLabels  `json:"detail"`
 	Tabs    EventTabLabels     `json:"tabs"`
 	Confirm EventConfirmLabels `json:"confirm"`
-	Errors   EventErrorLabels            `json:"errors"`
-	Status   EventStatusLabels           `json:"status"`
-	Calendar EventCalendarPopoverLabels  `json:"calendar"`
+	Errors    EventErrorLabels           `json:"errors"`
+	Status    EventStatusLabels          `json:"status"`
+	Calendar  EventCalendarPopoverLabels `json:"calendar"`
+	Dashboard ScheduleDashboardLabels    `json:"dashboard"`
+}
+
+// ScheduleDashboardLabels holds translatable strings for the Schedule live
+// dashboard (Phase 6 — Pyeza dashboard block + per-app live dashboards plan).
+// Sidebar/active-nav key is "schedule" so the struct name reflects that even
+// though the underlying domain is "event".
+type ScheduleDashboardLabels struct {
+	Title    string `json:"title"`
+	Subtitle string `json:"subtitle"`
+	// Stats
+	StatToday       string `json:"statToday"`
+	StatThisWeek    string `json:"statThisWeek"`
+	StatByTag       string `json:"statByTag"`
+	StatUtilization string `json:"statUtilization"`
+	// Widgets
+	WidgetByDay    string `json:"widgetByDay"`
+	WidgetByTag    string `json:"widgetByTag"`
+	WidgetUpcoming string `json:"widgetUpcoming"`
+	// Quick actions
+	QuickNew        string `json:"quickNew"`
+	QuickCalendar   string `json:"quickCalendar"`
+	QuickTags       string `json:"quickTags"`
+	QuickRecurrence string `json:"quickRecurrence"`
+	// Common
+	ViewAll       string `json:"viewAll"`
+	EmptyUpcoming string `json:"emptyUpcoming"`
+	EmptyByTag    string `json:"emptyByTag"`
 }
 
 // EventCalendarPopoverLabels holds strings rendered inside the month/week/day

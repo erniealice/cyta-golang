@@ -22,6 +22,7 @@ type EventRoutes struct {
 	TabActionURL     string `json:"tab_action_url"`
 	CalendarURL      string `json:"calendar_url"`
 	CalendarDataURL  string `json:"calendar_data_url"`
+	DashboardURL     string `json:"dashboard_url"`
 }
 
 // DefaultEventRoutes returns an EventRoutes populated from package-level constants.
@@ -40,6 +41,7 @@ func DefaultEventRoutes() EventRoutes {
 		TabActionURL:     EventTabActionURL,
 		CalendarURL:      CalendarURL,
 		CalendarDataURL:  CalendarDataURL,
+		DashboardURL:     ScheduleDashboardURL,
 	}
 }
 
@@ -57,6 +59,7 @@ func (r EventRoutes) RouteMap() map[string]string {
 		"event.tab_action":      r.TabActionURL,
 		"calendar.view":       r.CalendarURL,
 		"calendar.data":       r.CalendarDataURL,
+		"event.dashboard":     r.DashboardURL,
 	}
 }
 

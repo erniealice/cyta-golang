@@ -102,6 +102,8 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			if uc != nil {
 				wireEventDeps(deps, uc)
 			}
+			// Schedule dashboard (nil-safe: only wires if Event.Dashboard is present)
+			wireScheduleDashboard(deps, ctx.UseCases)
 
 			eventmod.NewModule(deps).RegisterRoutes(ctx.Routes)
 		}

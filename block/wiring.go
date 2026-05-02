@@ -22,6 +22,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"time"
 
 	commonpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	eventpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event"
@@ -33,8 +34,11 @@ import (
 	eventtagassignmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event_tag_assignment"
 
 	eventmod "github.com/erniealice/cyta-golang/views/event"
+	eventdashboard "github.com/erniealice/cyta-golang/views/event/dashboard"
 	eventform "github.com/erniealice/cyta-golang/views/event/form"
 	eventtagmod "github.com/erniealice/cyta-golang/views/event_tag"
+
+	consumer "github.com/erniealice/espyna-golang/consumer"
 )
 
 // ---------------------------------------------------------------------------
@@ -499,5 +503,117 @@ func wireEventTagDeps(deps *eventtagmod.ModuleDeps, uc *ucAggregate) {
 	}
 	if fn, ok := execFn(tag, "GetEventTagListPageData").(func(context.Context, *eventtagpb.GetEventTagListPageDataRequest) (*eventtagpb.GetEventTagListPageDataResponse, error)); ok {
 		deps.GetEventTagListPageData = fn
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Schedule dashboard wiring
+// ---------------------------------------------------------------------------
+
+// wireScheduleDashboard sets deps.GetScheduleDashboardData if
+// useCases.Event.Dashboard is non-nil. The workspace ID is extracted from
+// the request context via consumer.GetWorkspaceIDFromContext.
+func wireScheduleDashboard(deps *eventmod.ModuleDeps, raw any) {
+	if raw == nil {
+		return
+	}
+	uc := assertUseCases(raw)
+	if uc == nil {
+		return
+	}
+	// Navigate: Aggregate.Event (*EventUseCases).Dashboard (*GetScheduleDashboardPageDataUseCase)
+	ev := ptrField(uc.v, "Event")
+	if !ev.IsValid() {
+		return
+	}
+	dashField := ev.FieldByName("Dashboard")
+	if !dashField.IsValid() || dashField.Kind() != reflect.Ptr || dashField.IsNil() {
+		return
+	}
+	dashUC := dashField // pointer to GetScheduleDashboardPageDataUseCase
+	m := dashUC.MethodByName("Execute")
+	if !m.IsValid() {
+		return
+	}
+	reqType := m.Type().In(1).Elem() // *Request → Request
+
+	deps.GetScheduleDashboardData = func(ctx context.Context, req *eventdashboard.Request) (*eventdashboard.Response, error) {
+		workspaceID := ""
+		if req != nil {
+			workspaceID = req.WorkspaceID
+		}
+		if workspaceID == "" {
+			workspaceID = consumer.GetWorkspaceIDFromContext(ctx)
+		}
+		reqPtr := reflect.New(reqType)
+		if f := reqPtr.Elem().FieldByName("WorkspaceID"); f.IsValid() && f.CanSet() {
+			f.SetString(workspaceID)
+		}
+		if f := reqPtr.Elem().FieldByName("Now"); f.IsValid() && f.CanSet() {
+			f.Set(reflect.ValueOf(time.Now()))
+		}
+		results := m.Call([]reflect.Value{reflect.ValueOf(ctx), reqPtr})
+		if len(results) < 2 {
+			return nil, nil
+		}
+		if !results[1].IsNil() {
+			return nil, results[1].Interface().(error)
+		}
+		respVal := results[0]
+		if respVal.Kind() == reflect.Ptr {
+			if respVal.IsNil() {
+				return nil, nil
+			}
+			respVal = respVal.Elem()
+		}
+
+		// Map Stats sub-struct fields
+		var today, thisWeek, byTagCount, utilizationPct int64
+		if stats := respVal.FieldByName("Stats"); stats.IsValid() {
+			today = stats.FieldByName("Today").Int()
+			thisWeek = stats.FieldByName("ThisWeek").Int()
+			byTagCount = stats.FieldByName("ByTag").Int()
+			utilizationPct = stats.FieldByName("UtilizationPct").Int()
+		}
+		// ByTag: map[string]int64
+		var byTag map[string]int64
+		if f := respVal.FieldByName("ByTag"); f.IsValid() && !f.IsNil() {
+			if v, ok := f.Interface().(map[string]int64); ok {
+				byTag = v
+			}
+		}
+		// Upcoming: []*eventpb.Event
+		var upcoming []*eventpb.Event
+		if f := respVal.FieldByName("Upcoming"); f.IsValid() && !f.IsNil() {
+			if v, ok := f.Interface().([]*eventpb.Event); ok {
+				upcoming = v
+			}
+		}
+		// ByDayLabels / ByDayValues
+		var byDayLabels []string
+		var byDayValues []float64
+		if f := respVal.FieldByName("ByDayLabels"); f.IsValid() && !f.IsNil() {
+			if v, ok := f.Interface().([]string); ok {
+				byDayLabels = v
+			}
+		}
+		if f := respVal.FieldByName("ByDayValues"); f.IsValid() && !f.IsNil() {
+			if v, ok := f.Interface().([]float64); ok {
+				byDayValues = v
+			}
+		}
+		if byTag == nil {
+			byTag = map[string]int64{}
+		}
+		return &eventdashboard.Response{
+			Today:          today,
+			ThisWeek:       thisWeek,
+			ByTagCount:     byTagCount,
+			UtilizationPct: utilizationPct,
+			ByDayLabels:    byDayLabels,
+			ByDayValues:    byDayValues,
+			ByTag:          byTag,
+			Upcoming:       upcoming,
+		}, nil
 	}
 }

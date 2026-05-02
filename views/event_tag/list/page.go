@@ -208,11 +208,11 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string, p tablepar
 
 func eventTagColumns(l cyta.EventTagLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "name", Label: l.Columns.Name, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "9.375rem"},
-		{Key: "description", Label: l.Columns.Description, NoSort: true, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "9.375rem"},
-		{Key: "color", Label: l.Columns.Color, NoSort: true, WidthClass: "col-3xl"},
-		{Key: "status", Label: l.Columns.Status, NoSort: true, WidthClass: "col-2xl"},
-		{Key: "date_created", Label: l.Columns.DateCreated, Filterable: true, FilterType: types.FilterTypeDate, WidthClass: "col-6xl"},
+		{Key: "name", Label: l.Columns.Name, MinWidth: "9.375rem"},
+		{Key: "description", Label: l.Columns.Description, NoSort: true, MinWidth: "9.375rem"},
+		{Key: "color", Label: l.Columns.Color, NoSort: true, NoFilter: true, WidthClass: "col-3xl"},
+		{Key: "status", Label: l.Columns.Status, NoSort: true, NoFilter: true, WidthClass: "col-2xl"},
+		{Key: "date_created", Label: l.Columns.DateCreated, WidthClass: "col-6xl"},
 	}
 }
 
@@ -246,11 +246,11 @@ func buildTableRows(tags []*eventtagpb.EventTag, l cyta.EventTagLabels, routes c
 
 		actions := []types.TableAction{
 			{
-				Type:   "edit",
-				Label:  l.Actions.Edit,
-				Action: "edit",
-				URL:    route.ResolveURL(routes.EditURL, "id", id),
-				Disabled:        !perms.Can("event_tag", "update"),
+				Type:     "edit",
+				Label:    l.Actions.Edit,
+				Action:   "edit",
+				URL:      route.ResolveURL(routes.EditURL, "id", id),
+				Disabled: !perms.Can("event_tag", "update"),
 			},
 		}
 		deleteAction := types.TableAction{

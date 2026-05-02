@@ -5,7 +5,6 @@
 package form
 
 import (
-	cyta "github.com/erniealice/cyta-golang"
 	pyeza "github.com/erniealice/pyeza-golang"
 )
 
@@ -109,35 +108,3 @@ type Labels struct {
 	AttachmentsHint  string
 }
 
-// LabelsFromEvent flattens cyta.EventFormLabels into the template-facing Labels
-// shape. Keeps a single source of truth — when a new label is added to
-// EventFormLabels, this mapper picks it up automatically.
-//
-// Follows the LabelsFromXxx convention documented in
-// docs/wiki/articles/drawer-form-labels.md §"Why LabelsFromXxx Mappers Exist".
-func LabelsFromEvent(form cyta.EventFormLabels) Labels {
-	return Labels{
-		NameLabel:       form.Name,
-		NamePlaceholder: form.NamePlaceholder,
-
-		AllDayLabel:    form.AllDay,
-		StartDateLabel: form.StartDate,
-		StartTimeLabel: form.StartTime,
-		EndDateLabel:   form.EndDate,
-		EndTimeLabel:   form.EndTime,
-		TimezoneLabel:  form.Timezone,
-
-		StatusLabel: form.Status,
-
-		InviteesLabel:       form.Invitees,
-		InviteesPlaceholder: form.InviteesPlaceholder,
-		TagsLabel:           form.Tags,
-		TagsPlaceholder:     form.TagsPlaceholder,
-
-		NotesLabel:       form.Notes,
-		NotesPlaceholder: form.NotesPlaceholder,
-
-		AttachmentsLabel: form.Attachments,
-		AttachmentsHint:  form.AttachmentsHint,
-	}
-}

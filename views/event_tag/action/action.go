@@ -17,36 +17,11 @@ import (
 	eventtagpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event_tag"
 
 	cyta "github.com/erniealice/cyta-golang"
+	"github.com/erniealice/cyta-golang/views/event_tag/form"
 )
 
 // defaultColor is used when a drawer POST arrives with an empty color field.
 const defaultColor = "#6B7280"
-
-// FormLabels holds i18n labels for the drawer form template.
-// Flat shape consumed directly by the template (no shared LabelsFromX mapper —
-// this form has a single source struct, cyta.EventTagFormLabels).
-type FormLabels struct {
-	Name                   string
-	NamePlaceholder        string
-	Description            string
-	DescriptionPlaceholder string
-	Color                  string
-	ColorPlaceholder       string
-	Active                 string
-}
-
-// FormData is the template data for the event-tag drawer form.
-type FormData struct {
-	FormAction   string
-	IsEdit       bool
-	ID           string
-	Name         string
-	Description  string
-	Color        string
-	Active       bool
-	Labels       FormLabels
-	CommonLabels any
-}
 
 // Deps holds dependencies for event-tag action handlers.
 type Deps struct {
@@ -59,20 +34,6 @@ type Deps struct {
 	GetEventTagInUseIDs func(ctx context.Context, ids []string) (map[string]bool, error)
 }
 
-// formLabels maps cyta.EventTagFormLabels onto the flat template struct.
-// Keeps the template-facing shape independent of cyta's label-struct layout.
-func formLabels(src cyta.EventTagFormLabels) FormLabels {
-	return FormLabels{
-		Name:                   src.Name,
-		NamePlaceholder:        src.NamePlaceholder,
-		Description:            src.Description,
-		DescriptionPlaceholder: src.DescriptionPlaceholder,
-		Color:                  src.Color,
-		ColorPlaceholder:       src.ColorPlaceholder,
-		Active:                 src.Active,
-	}
-}
-
 // NewAddAction creates the event-tag add action (GET = form, POST = create).
 func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
@@ -82,11 +43,19 @@ func NewAddAction(deps *Deps) view.View {
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
-			return view.OK("event-tag-drawer-form", &FormData{
+			return view.OK("event-tag-drawer-form", &form.Data{
 				FormAction:   deps.Routes.AddURL,
 				Active:       true,
 				Color:        defaultColor,
-				Labels:       formLabels(deps.Labels.Form),
+				Labels: form.Labels{
+					Name:                   deps.Labels.Form.Name,
+					NamePlaceholder:        deps.Labels.Form.NamePlaceholder,
+					Description:            deps.Labels.Form.Description,
+					DescriptionPlaceholder: deps.Labels.Form.DescriptionPlaceholder,
+					Color:                  deps.Labels.Form.Color,
+					ColorPlaceholder:       deps.Labels.Form.ColorPlaceholder,
+					Active:                 deps.Labels.Form.Active,
+				},
 				CommonLabels: nil, // injected by ViewAdapter
 			})
 		}
@@ -143,7 +112,7 @@ func NewEditAction(deps *Deps) view.View {
 			}
 			tag := data[0]
 
-			return view.OK("event-tag-drawer-form", &FormData{
+			return view.OK("event-tag-drawer-form", &form.Data{
 				FormAction:   route.ResolveURL(deps.Routes.EditURL, "id", id),
 				IsEdit:       true,
 				ID:           id,
@@ -151,7 +120,15 @@ func NewEditAction(deps *Deps) view.View {
 				Description:  tag.GetDescription(),
 				Color:        tag.GetColor(),
 				Active:       tag.GetActive(),
-				Labels:       formLabels(deps.Labels.Form),
+				Labels: form.Labels{
+					Name:                   deps.Labels.Form.Name,
+					NamePlaceholder:        deps.Labels.Form.NamePlaceholder,
+					Description:            deps.Labels.Form.Description,
+					DescriptionPlaceholder: deps.Labels.Form.DescriptionPlaceholder,
+					Color:                  deps.Labels.Form.Color,
+					ColorPlaceholder:       deps.Labels.Form.ColorPlaceholder,
+					Active:                 deps.Labels.Form.Active,
+				},
 				CommonLabels: nil, // injected by ViewAdapter
 			})
 		}

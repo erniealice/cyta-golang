@@ -79,7 +79,25 @@ func NewAddAction(deps *Deps) view.View {
 				StatusOptions: cytaeventform.BuildStatusOptions(deps.Labels.Status, eventpb.EventStatus_EVENT_STATUS_TENTATIVE),
 				TagOptions:    tagOptions,
 				// AttendeeOptions empty — populated client-side by the multi-select search hook.
-				Labels:       cytaeventform.LabelsFromEvent(deps.Labels.Form),
+				Labels: cytaeventform.Labels{
+					NameLabel:              deps.Labels.Form.Name,
+					NamePlaceholder:        deps.Labels.Form.NamePlaceholder,
+					AllDayLabel:            deps.Labels.Form.AllDay,
+					StartDateLabel:         deps.Labels.Form.StartDate,
+					StartTimeLabel:         deps.Labels.Form.StartTime,
+					EndDateLabel:           deps.Labels.Form.EndDate,
+					EndTimeLabel:           deps.Labels.Form.EndTime,
+					TimezoneLabel:          deps.Labels.Form.Timezone,
+					StatusLabel:            deps.Labels.Form.Status,
+					InviteesLabel:          deps.Labels.Form.Invitees,
+					InviteesPlaceholder:    deps.Labels.Form.InviteesPlaceholder,
+					TagsLabel:              deps.Labels.Form.Tags,
+					TagsPlaceholder:        deps.Labels.Form.TagsPlaceholder,
+					NotesLabel:             deps.Labels.Form.Notes,
+					NotesPlaceholder:       deps.Labels.Form.NotesPlaceholder,
+					AttachmentsLabel:       deps.Labels.Form.Attachments,
+					AttachmentsHint:        deps.Labels.Form.AttachmentsHint,
+				},
 				CommonLabels: deps.CommonLabels,
 			})
 		}
@@ -141,8 +159,26 @@ func NewEditAction(deps *Deps) view.View {
 				AttendeeOptions:   nil, // edit mode shows existing as chips; new searches via client-side
 				SelectedAttendees: selectedAttendees,
 				Attachments:       attachments,
-				Labels:            cytaeventform.LabelsFromEvent(deps.Labels.Form),
-				CommonLabels:      deps.CommonLabels,
+				Labels: cytaeventform.Labels{
+					NameLabel:              deps.Labels.Form.Name,
+					NamePlaceholder:        deps.Labels.Form.NamePlaceholder,
+					AllDayLabel:            deps.Labels.Form.AllDay,
+					StartDateLabel:         deps.Labels.Form.StartDate,
+					StartTimeLabel:         deps.Labels.Form.StartTime,
+					EndDateLabel:           deps.Labels.Form.EndDate,
+					EndTimeLabel:           deps.Labels.Form.EndTime,
+					TimezoneLabel:          deps.Labels.Form.Timezone,
+					StatusLabel:            deps.Labels.Form.Status,
+					InviteesLabel:          deps.Labels.Form.Invitees,
+					InviteesPlaceholder:    deps.Labels.Form.InviteesPlaceholder,
+					TagsLabel:              deps.Labels.Form.Tags,
+					TagsPlaceholder:        deps.Labels.Form.TagsPlaceholder,
+					NotesLabel:             deps.Labels.Form.Notes,
+					NotesPlaceholder:       deps.Labels.Form.NotesPlaceholder,
+					AttachmentsLabel:       deps.Labels.Form.Attachments,
+					AttachmentsHint:        deps.Labels.Form.AttachmentsHint,
+				},
+				CommonLabels: deps.CommonLabels,
 			})
 		}
 

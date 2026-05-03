@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	cyta "github.com/erniealice/cyta-golang"
@@ -134,12 +135,34 @@ func NewEditAction(deps *Deps) view.View {
 			startDate, startTime := splitTimestamp(record.GetStartDateTimeUtc())
 			endDate, endTime := splitTimestamp(record.GetEndDateTimeUtc())
 
-			tagOptions := safeListTags(ctx, deps)
-			selectedTagIDs := safeListTagIDsForEvent(ctx, deps, id)
+			// The four auxiliary list calls are independent — fetch them in
+			// parallel to reduce drawer-open latency.
+			var (
+				tagOptions        []cytaeventform.Option
+				selectedTagIDs    []string
+				selectedAttendees []cytaeventform.SelectedOption
+				attachments       []cytaeventform.Attachment
+				wg                sync.WaitGroup
+			)
+			wg.Add(4)
+			go func() {
+				defer wg.Done()
+				tagOptions = safeListTags(ctx, deps)
+			}()
+			go func() {
+				defer wg.Done()
+				selectedTagIDs = safeListTagIDsForEvent(ctx, deps, id)
+			}()
+			go func() {
+				defer wg.Done()
+				selectedAttendees = safeListAttendees(ctx, deps, id)
+			}()
+			go func() {
+				defer wg.Done()
+				attachments = safeListAttachments(ctx, deps, id)
+			}()
+			wg.Wait()
 			markSelectedTags(tagOptions, selectedTagIDs)
-
-			selectedAttendees := safeListAttendees(ctx, deps, id)
-			attachments := safeListAttachments(ctx, deps, id)
 
 			return view.OK("event-drawer-form", &cytaeventform.Data{
 				FormAction:        route.ResolveURL(deps.Routes.EditURL, "id", id),

@@ -7,8 +7,10 @@ import (
 	"time"
 
 	cyta "github.com/erniealice/cyta-golang"
+	"github.com/erniealice/hybra-golang/views/attachment"
 	"github.com/erniealice/pyeza-golang/types"
 
+	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	eventattendeepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event_attendee"
 	eventoccurrencepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event_occurrence"
 	eventproductpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event_product"
@@ -428,8 +430,23 @@ func buildOccurrencesTable(
 // ---------------------------------------------------------------------------
 
 func loadAttachmentsTab(ctx context.Context, deps *DetailViewDeps, pageData *PageData, eventID string) {
+	// Prefer hybra attachment table when ops are wired.
+	if deps.ListAttachments != nil {
+		cfg := attachmentConfig(deps)
+		resp, err := deps.ListAttachments(ctx, cfg.EntityType, eventID)
+		if err != nil {
+			log.Printf("Failed to list attachments: %v", err)
+		}
+		var items []*attachmentpb.Attachment
+		if resp != nil {
+			items = resp.GetData()
+		}
+		pageData.AttachmentTable = attachment.BuildTable(items, cfg, eventID)
+		return
+	}
+
+	// Legacy flat-list fallback (Phase 5 path).
 	if deps.ListEventAttachments == nil {
-		// No backing — leave Attachments nil; the template renders empty state.
 		return
 	}
 	rows, err := deps.ListEventAttachments(ctx, eventID)

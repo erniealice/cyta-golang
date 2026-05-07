@@ -20,6 +20,7 @@ import (
 	cyta "github.com/erniealice/cyta-golang"
 	eventmod "github.com/erniealice/cyta-golang/views/event"
 	eventtagmod "github.com/erniealice/cyta-golang/views/event_tag"
+	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	eventpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event"
 	"github.com/erniealice/espyna-golang/reference"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
@@ -79,6 +80,13 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			eventLabels := defaultEventLabels()
 			_ = translations.LoadPathIfExists("en", ctx.BusinessType, "event.json", "event", &eventLabels)
 
+			// --- Type-assert attachment operations ---
+			uploadFile, _ := ctx.UploadFile.(func(context.Context, string, string, []byte, string) error)
+			listAttachments, _ := ctx.ListAttachments.(func(context.Context, string, string) (*attachmentpb.ListAttachmentsResponse, error))
+			createAttachment, _ := ctx.CreateAttachment.(func(context.Context, *attachmentpb.CreateAttachmentRequest) (*attachmentpb.CreateAttachmentResponse, error))
+			deleteAttachment, _ := ctx.DeleteAttachment.(func(context.Context, *attachmentpb.DeleteAttachmentRequest) (*attachmentpb.DeleteAttachmentResponse, error))
+			newAttachmentID, _ := ctx.NewAttachmentID.(func() string)
+
 			// Wire use cases — scheduling engine is not yet fully wired in espyna
 			// so we always provide stub fallbacks (matching domain_schedule.go).
 			deps := &eventmod.ModuleDeps{
@@ -104,6 +112,13 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			}
 			// Schedule dashboard (nil-safe: only wires if Event.Dashboard is present)
 			wireScheduleDashboard(deps, ctx.UseCases)
+
+			// Wire attachment ops (nil-safe — degrade gracefully when not provided).
+			deps.UploadFile = uploadFile
+			deps.ListAttachments = listAttachments
+			deps.CreateAttachment = createAttachment
+			deps.DeleteAttachment = deleteAttachment
+			deps.NewID = newAttachmentID
 
 			eventmod.NewModule(deps).RegisterRoutes(ctx.Routes)
 		}
@@ -217,6 +232,7 @@ func defaultEventLabels() cyta.EventLabels {
 			Resources:   "Resources",
 			Products:    "Products",
 			Occurrences: "Occurrences",
+			Attachments: "Attachments",
 		},
 		Confirm: cyta.EventConfirmLabels{
 			DeleteTitle:   "Delete Event",

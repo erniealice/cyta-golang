@@ -21,6 +21,10 @@ type EventRoutes struct {
 	BulkSetStatusURL string `json:"bulk_set_status_url"`
 	TabActionURL     string `json:"tab_action_url"`
 	CalendarURL      string `json:"calendar_url"`
+
+	// Attachment routes
+	AttachmentUploadURL string `json:"attachment_upload_url"`
+	AttachmentDeleteURL string `json:"attachment_delete_url"`
 	CalendarDataURL  string `json:"calendar_data_url"`
 	DashboardURL     string `json:"dashboard_url"`
 }
@@ -38,8 +42,10 @@ func DefaultEventRoutes() EventRoutes {
 		BulkDeleteURL:    EventBulkDeleteURL,
 		SetStatusURL:     EventSetStatusURL,
 		BulkSetStatusURL: EventBulkSetStatusURL,
-		TabActionURL:     EventTabActionURL,
-		CalendarURL:      CalendarURL,
+		TabActionURL:        EventTabActionURL,
+		CalendarURL:         CalendarURL,
+		AttachmentUploadURL: EventAttachmentUploadURL,
+		AttachmentDeleteURL: EventAttachmentDeleteURL,
 		CalendarDataURL:  CalendarDataURL,
 		DashboardURL:     ScheduleDashboardURL,
 	}
@@ -56,8 +62,10 @@ func (r EventRoutes) RouteMap() map[string]string {
 		"event.bulk_delete":     r.BulkDeleteURL,
 		"event.set_status":      r.SetStatusURL,
 		"event.bulk_set_status": r.BulkSetStatusURL,
-		"event.tab_action":      r.TabActionURL,
-		"calendar.view":       r.CalendarURL,
+		"event.tab_action":           r.TabActionURL,
+		"event.attachment_upload":    r.AttachmentUploadURL,
+		"event.attachment_delete":    r.AttachmentDeleteURL,
+		"calendar.view":              r.CalendarURL,
 		"calendar.data":       r.CalendarDataURL,
 		"event.dashboard":     r.DashboardURL,
 	}

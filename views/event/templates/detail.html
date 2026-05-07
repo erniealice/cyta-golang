@@ -1,0 +1,121 @@
+{{/* Full page — for direct access / non-HTMX */}}
+{{define "event-detail"}}
+{{template "app-shell" .}}
+{{end}}
+
+{{/* Content-only partial — for HTMX navigation */}}
+{{define "event-detail-content"}}
+<div class="page-content detail-layout" data-page-title="{{.Labels.Detail.Heading}}">
+    {{/* --- Tabs --- */}}
+    <div class="detail-tabs">
+        {{template "tabs" (dict "Items" .TabItems "ActiveTab" .ActiveTab "Variant" "default" "ID" "event-tabs")}}
+    </div>
+
+    {{/* --- Tab Body --- */}}
+    <div id="tabContent" class="detail-body" role="tabpanel" aria-labelledby="tab-{{.ActiveTab}}">
+        {{if eq .ActiveTab "overview"}}
+        {{template "event-tab-overview" .}}
+        {{else if eq .ActiveTab "attendees"}}
+        {{template "event-tab-attendees" .}}
+        {{else if eq .ActiveTab "resources"}}
+        {{template "event-tab-resources" .}}
+        {{else if eq .ActiveTab "product"}}
+        {{template "event-tab-product" .}}
+        {{else if eq .ActiveTab "occurrences"}}
+        {{template "event-tab-occurrences" .}}
+        {{else if eq .ActiveTab "attachments"}}
+        {{template "attachment-tab" .}}
+        {{end}}
+    </div>
+</div>
+{{end}}
+
+{{/* Overview Tab */}}
+{{define "event-tab-overview"}}
+<div class="tab-scroll">
+    <div class="detail-info-grid">
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.Status}}</span>
+            <span class="badge badge--{{index .Event "status_variant"}}">{{index .Event "status"}}</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.TimeRange}}</span>
+            <span class="detail-info-value">{{index .Event "start_date_time_string"}} — {{index .Event "end_date_time_string"}}</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.Organizer}}</span>
+            <span class="detail-info-value">{{index .Event "organizer_id"}}</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.Location}}</span>
+            <span class="detail-info-value">{{index .Event "location_id"}}</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.Recurrence}}</span>
+            <span class="detail-info-value">{{index .Event "event_recurrence_id"}}</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.AllDay}}</span>
+            <span class="detail-info-value">{{index .Event "all_day"}}</span>
+        </div>
+    </div>
+    {{if index .Event "description"}}
+    <div class="detail-section-spacer">
+        <h4 class="detail-section-title">{{.Labels.Detail.Description}}</h4>
+        <div class="detail-notes-block">{{index .Event "description"}}</div>
+    </div>
+    {{end}}
+</div>
+{{end}}
+
+{{/* Attendees Tab */}}
+{{define "event-tab-attendees"}}
+<div class="tab-scroll">
+    {{if .AttendeesTable}}
+        {{template "table-card" .AttendeesTable}}
+    {{else}}
+    <div class="coming-soon-panel">
+        <p class="coming-soon-text">{{.Labels.Tabs.Attendees}}</p>
+    </div>
+    {{end}}
+</div>
+{{end}}
+
+{{/* Resources Tab */}}
+{{define "event-tab-resources"}}
+<div class="tab-scroll">
+    {{if .ResourcesTable}}
+        {{template "table-card" .ResourcesTable}}
+    {{else}}
+    <div class="coming-soon-panel">
+        <p class="coming-soon-text">{{.Labels.Tabs.Resources}}</p>
+    </div>
+    {{end}}
+</div>
+{{end}}
+
+{{/* Products Tab */}}
+{{define "event-tab-product"}}
+<div class="tab-scroll">
+    {{if .ProductsTable}}
+        {{template "table-card" .ProductsTable}}
+    {{else}}
+    <div class="coming-soon-panel">
+        <p class="coming-soon-text">{{.Labels.Tabs.Products}}</p>
+    </div>
+    {{end}}
+</div>
+{{end}}
+
+{{/* Occurrences Tab */}}
+{{define "event-tab-occurrences"}}
+<div class="tab-scroll">
+    {{if .OccurrencesTable}}
+        {{template "table-card" .OccurrencesTable}}
+    {{else}}
+    <div class="coming-soon-panel">
+        <p class="coming-soon-text">{{.Labels.Tabs.Occurrences}}</p>
+    </div>
+    {{end}}
+</div>
+{{end}}

@@ -142,6 +142,7 @@ type EventTabLabels struct {
 	Resources   string `json:"resources"`
 	Products    string `json:"products"`
 	Occurrences string `json:"occurrences"`
+	Attachments string `json:"tabAttachments"`
 }
 
 type EventConfirmLabels struct {

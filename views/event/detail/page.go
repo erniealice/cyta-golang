@@ -29,10 +29,10 @@ type PageData struct {
 	ResourcesTable   *types.TableConfig
 	ProductsTable    *types.TableConfig
 	OccurrencesTable *types.TableConfig
-	// Phase 5 — attachments tab is rendered from a flat list (rather than
-	// the standard table component) since attachments have a download link
-	// rather than row actions. Empty slice ⇒ tab shows the empty state.
+	// Phase 5 — attachments tab (legacy flat-list, kept for action.Deps compat).
 	Attachments []eventform.Attachment
+	// Hybra attachment table (replaces flat-list when hybra ops are wired).
+	AttachmentTable *types.TableConfig
 }
 
 // eventToMap converts an Event protobuf to a map[string]any for template use.
@@ -160,7 +160,7 @@ func buildTabItems(l cyta.EventLabels, id string, routes cyta.EventRoutes) []pye
 		{Key: "resources", Label: l.Tabs.Resources, Href: base + "?tab=resources", HxGet: action + "resources", Icon: "icon-box"},
 		{Key: "product", Label: l.Tabs.Products, Href: base + "?tab=products", HxGet: action + "product", Icon: "icon-tag"},
 		{Key: "occurrences", Label: l.Tabs.Occurrences, Href: base + "?tab=occurrences", HxGet: action + "occurrences", Icon: "icon-repeat"},
-		{Key: "attachments", Label: l.Form.Attachments, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
+		{Key: "attachments", Label: l.Tabs.Attachments, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
 	}
 }
 

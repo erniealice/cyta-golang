@@ -9,6 +9,7 @@ import (
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
+	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	eventpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event"
 	eventattendeepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event_attendee"
 	eventoccurrencepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event_occurrence"
@@ -63,22 +64,31 @@ type ModuleDeps struct {
 	// Phase 6 — schedule dashboard read-only projection callback.
 	// Nillable; when nil the dashboard renders empty stats / widgets.
 	GetScheduleDashboardData func(ctx context.Context, req *eventdashboard.Request) (*eventdashboard.Response, error)
+
+	// Hybra attachment ops (nillable; degrade gracefully when nil).
+	UploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
+	ListAttachments  func(ctx context.Context, moduleKey, foreignKey string) (*attachmentpb.ListAttachmentsResponse, error)
+	CreateAttachment func(ctx context.Context, req *attachmentpb.CreateAttachmentRequest) (*attachmentpb.CreateAttachmentResponse, error)
+	DeleteAttachment func(ctx context.Context, req *attachmentpb.DeleteAttachmentRequest) (*attachmentpb.DeleteAttachmentResponse, error)
+	NewID            func() string
 }
 
 // Module holds all constructed event views.
 type Module struct {
-	routes        cyta.EventRoutes
-	List          view.View
-	Detail        view.View
-	TabAction     view.View
-	Add           view.View
-	Edit          view.View
-	Delete        view.View
-	BulkDelete    view.View
-	SetStatus     view.View
-	BulkSetStatus view.View
-	Calendar      view.View
-	Dashboard     view.View
+	routes           cyta.EventRoutes
+	List             view.View
+	Detail           view.View
+	TabAction        view.View
+	Add              view.View
+	Edit             view.View
+	Delete           view.View
+	BulkDelete       view.View
+	SetStatus        view.View
+	BulkSetStatus    view.View
+	Calendar         view.View
+	Dashboard        view.View
+	AttachmentUpload view.View
+	AttachmentDelete view.View
 }
 
 // NewModule creates a new event module with all views wired.
@@ -95,6 +105,11 @@ func NewModule(deps *ModuleDeps) *Module {
 		ListEventOccurrences: deps.ListEventOccurrences,
 		ListEventAttachments: deps.ListEventAttachments,
 	}
+	detailDeps.UploadFile = deps.UploadFile
+	detailDeps.ListAttachments = deps.ListAttachments
+	detailDeps.CreateAttachment = deps.CreateAttachment
+	detailDeps.DeleteAttachment = deps.DeleteAttachment
+	detailDeps.NewAttachmentID = deps.NewID
 
 	actionDeps := &eventaction.Deps{
 		Routes:                 deps.Routes,
@@ -144,6 +159,8 @@ func NewModule(deps *ModuleDeps) *Module {
 			CommonLabels:     deps.CommonLabels,
 			GetDashboardData: deps.GetScheduleDashboardData,
 		}),
+		AttachmentUpload: eventdetail.NewAttachmentUploadAction(detailDeps),
+		AttachmentDelete: eventdetail.NewAttachmentDeleteAction(detailDeps),
 	}
 }
 
@@ -162,4 +179,10 @@ func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
 	r.POST(m.routes.BulkSetStatusURL, m.BulkSetStatus)
 	r.GET(m.routes.CalendarURL, m.Calendar)
 	r.GET(m.routes.DashboardURL, m.Dashboard)
+	// Attachments
+	if m.AttachmentUpload != nil {
+		r.GET(m.routes.AttachmentUploadURL, m.AttachmentUpload)
+		r.POST(m.routes.AttachmentUploadURL, m.AttachmentUpload)
+		r.POST(m.routes.AttachmentDeleteURL, m.AttachmentDelete)
+	}
 }

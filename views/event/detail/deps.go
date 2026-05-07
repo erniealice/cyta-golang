@@ -6,6 +6,7 @@ import (
 	cyta "github.com/erniealice/cyta-golang"
 	eventform "github.com/erniealice/cyta-golang/views/event/form"
 
+	"github.com/erniealice/hybra-golang/views/attachment"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/types"
 
@@ -32,9 +33,11 @@ type DetailViewDeps struct {
 	ListEventProducts    func(ctx context.Context, req *eventproductpb.ListEventProductsRequest) (*eventproductpb.ListEventProductsResponse, error)
 	ListEventOccurrences func(ctx context.Context, req *eventoccurrencepb.ListEventOccurrencesRequest) (*eventoccurrencepb.ListEventOccurrencesResponse, error)
 
-	// Phase 5 — attachments tab. Returns attachments for the given event ID
-	// from document.Attachment with module_key="event". Nil-safe: an unwired
-	// callback simply renders the empty state. Same signature as
-	// action.Deps.ListEventAttachments — block.go wires both from one source.
+	// Phase 5 — attachments tab (legacy flat-list path, kept for action.Deps compatibility).
+	// When the hybra attachment ops below are wired, the detail page renders the
+	// standard hybra attachment table instead.
 	ListEventAttachments func(ctx context.Context, eventID string) ([]eventform.Attachment, error)
+
+	// Hybra attachment ops (upload/delete/list via hybra attachment.BuildTable).
+	attachment.AttachmentOps
 }

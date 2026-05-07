@@ -12,7 +12,9 @@ const (
 	EventBulkDeleteURL    = "/action/schedule/bulk-delete"
 	EventSetStatusURL     = "/action/schedule/set-status"
 	EventBulkSetStatusURL = "/action/schedule/bulk-set-status"
-	EventTabActionURL     = "/action/schedule/detail/{id}/tab/{tab}"
+	EventTabActionURL            = "/action/schedule/detail/{id}/tab/{tab}"
+	EventAttachmentUploadURL     = "/action/schedule/detail/{id}/attachments/upload"
+	EventAttachmentDeleteURL     = "/action/schedule/detail/{id}/attachments/delete"
 
 	// Calendar view routes
 	CalendarURL     = "/app/schedule/calendar"

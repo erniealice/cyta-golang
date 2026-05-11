@@ -36,11 +36,11 @@ type Response struct {
 
 // Deps holds view dependencies.
 type Deps struct {
-	Routes          cyta.EventRoutes
-	EventTagRoutes  cyta.EventTagRoutes
+	Routes           cyta.EventRoutes
+	EventTagRoutes   cyta.EventTagRoutes
 	RecurrenceRoutes cyta.RecurrenceRoutes
-	Labels          cyta.EventLabels
-	CommonLabels    pyeza.CommonLabels
+	Labels           cyta.EventLabels
+	CommonLabels     pyeza.CommonLabels
 	GetDashboardData func(ctx context.Context, req *Request) (*Response, error)
 }
 

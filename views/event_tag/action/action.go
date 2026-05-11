@@ -44,9 +44,9 @@ func NewAddAction(deps *Deps) view.View {
 
 		if viewCtx.Request.Method == http.MethodGet {
 			return view.OK("event-tag-drawer-form", &form.Data{
-				FormAction:   deps.Routes.AddURL,
-				Active:       true,
-				Color:        defaultColor,
+				FormAction: deps.Routes.AddURL,
+				Active:     true,
+				Color:      defaultColor,
 				Labels: form.Labels{
 					Name:                   deps.Labels.Form.Name,
 					NamePlaceholder:        deps.Labels.Form.NamePlaceholder,
@@ -113,13 +113,13 @@ func NewEditAction(deps *Deps) view.View {
 			tag := data[0]
 
 			return view.OK("event-tag-drawer-form", &form.Data{
-				FormAction:   route.ResolveURL(deps.Routes.EditURL, "id", id),
-				IsEdit:       true,
-				ID:           id,
-				Name:         tag.GetName(),
-				Description:  tag.GetDescription(),
-				Color:        tag.GetColor(),
-				Active:       tag.GetActive(),
+				FormAction:  route.ResolveURL(deps.Routes.EditURL, "id", id),
+				IsEdit:      true,
+				ID:          id,
+				Name:        tag.GetName(),
+				Description: tag.GetDescription(),
+				Color:       tag.GetColor(),
+				Active:      tag.GetActive(),
 				Labels: form.Labels{
 					Name:                   deps.Labels.Form.Name,
 					NamePlaceholder:        deps.Labels.Form.NamePlaceholder,

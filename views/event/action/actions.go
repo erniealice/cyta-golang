@@ -39,13 +39,13 @@ type Deps struct {
 	// Phase 4 additions — pickers + sync
 	// All return ([]form.Option, ...) shaped lists so the templates don't
 	// need to know about proto types. Wired by block.go.
-	ListEventTags             func(ctx context.Context) ([]cytaeventform.Option, error)
-	ListEventTagsForEvent     func(ctx context.Context, eventID string) ([]string, error) // assigned tag IDs
-	SearchAttendees           func(ctx context.Context, query string) ([]cytaeventform.Option, error)
-	ListAttendeesForEvent     func(ctx context.Context, eventID string) ([]cytaeventform.SelectedOption, error)
-	SetEventTagAssignments    func(ctx context.Context, eventID string, tagIDs []string) error
-	SyncEventAttendees        func(ctx context.Context, eventID string, attendeeRefs []string) error
-	ListEventAttachments      func(ctx context.Context, eventID string) ([]cytaeventform.Attachment, error)
+	ListEventTags          func(ctx context.Context) ([]cytaeventform.Option, error)
+	ListEventTagsForEvent  func(ctx context.Context, eventID string) ([]string, error) // assigned tag IDs
+	SearchAttendees        func(ctx context.Context, query string) ([]cytaeventform.Option, error)
+	ListAttendeesForEvent  func(ctx context.Context, eventID string) ([]cytaeventform.SelectedOption, error)
+	SetEventTagAssignments func(ctx context.Context, eventID string, tagIDs []string) error
+	SyncEventAttendees     func(ctx context.Context, eventID string, attendeeRefs []string) error
+	ListEventAttachments   func(ctx context.Context, eventID string) ([]cytaeventform.Attachment, error)
 }
 
 // NewAddAction creates the event add action (GET = form, POST = create).
@@ -81,23 +81,23 @@ func NewAddAction(deps *Deps) view.View {
 				TagOptions:    tagOptions,
 				// AttendeeOptions empty — populated client-side by the multi-select search hook.
 				Labels: cytaeventform.Labels{
-					NameLabel:              deps.Labels.Form.Name,
-					NamePlaceholder:        deps.Labels.Form.NamePlaceholder,
-					AllDayLabel:            deps.Labels.Form.AllDay,
-					StartDateLabel:         deps.Labels.Form.StartDate,
-					StartTimeLabel:         deps.Labels.Form.StartTime,
-					EndDateLabel:           deps.Labels.Form.EndDate,
-					EndTimeLabel:           deps.Labels.Form.EndTime,
-					TimezoneLabel:          deps.Labels.Form.Timezone,
-					StatusLabel:            deps.Labels.Form.Status,
-					InviteesLabel:          deps.Labels.Form.Invitees,
-					InviteesPlaceholder:    deps.Labels.Form.InviteesPlaceholder,
-					TagsLabel:              deps.Labels.Form.Tags,
-					TagsPlaceholder:        deps.Labels.Form.TagsPlaceholder,
-					NotesLabel:             deps.Labels.Form.Notes,
-					NotesPlaceholder:       deps.Labels.Form.NotesPlaceholder,
-					AttachmentsLabel:       deps.Labels.Form.Attachments,
-					AttachmentsHint:        deps.Labels.Form.AttachmentsHint,
+					NameLabel:           deps.Labels.Form.Name,
+					NamePlaceholder:     deps.Labels.Form.NamePlaceholder,
+					AllDayLabel:         deps.Labels.Form.AllDay,
+					StartDateLabel:      deps.Labels.Form.StartDate,
+					StartTimeLabel:      deps.Labels.Form.StartTime,
+					EndDateLabel:        deps.Labels.Form.EndDate,
+					EndTimeLabel:        deps.Labels.Form.EndTime,
+					TimezoneLabel:       deps.Labels.Form.Timezone,
+					StatusLabel:         deps.Labels.Form.Status,
+					InviteesLabel:       deps.Labels.Form.Invitees,
+					InviteesPlaceholder: deps.Labels.Form.InviteesPlaceholder,
+					TagsLabel:           deps.Labels.Form.Tags,
+					TagsPlaceholder:     deps.Labels.Form.TagsPlaceholder,
+					NotesLabel:          deps.Labels.Form.Notes,
+					NotesPlaceholder:    deps.Labels.Form.NotesPlaceholder,
+					AttachmentsLabel:    deps.Labels.Form.Attachments,
+					AttachmentsHint:     deps.Labels.Form.AttachmentsHint,
 				},
 				CommonLabels: deps.CommonLabels,
 			})
@@ -183,23 +183,23 @@ func NewEditAction(deps *Deps) view.View {
 				SelectedAttendees: selectedAttendees,
 				Attachments:       attachments,
 				Labels: cytaeventform.Labels{
-					NameLabel:              deps.Labels.Form.Name,
-					NamePlaceholder:        deps.Labels.Form.NamePlaceholder,
-					AllDayLabel:            deps.Labels.Form.AllDay,
-					StartDateLabel:         deps.Labels.Form.StartDate,
-					StartTimeLabel:         deps.Labels.Form.StartTime,
-					EndDateLabel:           deps.Labels.Form.EndDate,
-					EndTimeLabel:           deps.Labels.Form.EndTime,
-					TimezoneLabel:          deps.Labels.Form.Timezone,
-					StatusLabel:            deps.Labels.Form.Status,
-					InviteesLabel:          deps.Labels.Form.Invitees,
-					InviteesPlaceholder:    deps.Labels.Form.InviteesPlaceholder,
-					TagsLabel:              deps.Labels.Form.Tags,
-					TagsPlaceholder:        deps.Labels.Form.TagsPlaceholder,
-					NotesLabel:             deps.Labels.Form.Notes,
-					NotesPlaceholder:       deps.Labels.Form.NotesPlaceholder,
-					AttachmentsLabel:       deps.Labels.Form.Attachments,
-					AttachmentsHint:        deps.Labels.Form.AttachmentsHint,
+					NameLabel:           deps.Labels.Form.Name,
+					NamePlaceholder:     deps.Labels.Form.NamePlaceholder,
+					AllDayLabel:         deps.Labels.Form.AllDay,
+					StartDateLabel:      deps.Labels.Form.StartDate,
+					StartTimeLabel:      deps.Labels.Form.StartTime,
+					EndDateLabel:        deps.Labels.Form.EndDate,
+					EndTimeLabel:        deps.Labels.Form.EndTime,
+					TimezoneLabel:       deps.Labels.Form.Timezone,
+					StatusLabel:         deps.Labels.Form.Status,
+					InviteesLabel:       deps.Labels.Form.Invitees,
+					InviteesPlaceholder: deps.Labels.Form.InviteesPlaceholder,
+					TagsLabel:           deps.Labels.Form.Tags,
+					TagsPlaceholder:     deps.Labels.Form.TagsPlaceholder,
+					NotesLabel:          deps.Labels.Form.Notes,
+					NotesPlaceholder:    deps.Labels.Form.NotesPlaceholder,
+					AttachmentsLabel:    deps.Labels.Form.Attachments,
+					AttachmentsHint:     deps.Labels.Form.AttachmentsHint,
 				},
 				CommonLabels: deps.CommonLabels,
 			})

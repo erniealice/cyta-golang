@@ -53,13 +53,13 @@ type ModuleDeps struct {
 	ListEventOccurrences func(ctx context.Context, req *eventoccurrencepb.ListEventOccurrencesRequest) (*eventoccurrencepb.ListEventOccurrencesResponse, error)
 
 	// Phase 4 — drawer pickers (all nillable; degrade gracefully when nil)
-	ListEventTags             func(ctx context.Context) ([]eventform.Option, error)
-	ListEventTagsForEvent     func(ctx context.Context, eventID string) ([]string, error)
-	SearchAttendees           func(ctx context.Context, query string) ([]eventform.Option, error)
-	ListAttendeesForEvent     func(ctx context.Context, eventID string) ([]eventform.SelectedOption, error)
-	SetEventTagAssignments    func(ctx context.Context, eventID string, tagIDs []string) error
-	SyncEventAttendees        func(ctx context.Context, eventID string, attendeeRefs []string) error
-	ListEventAttachments      func(ctx context.Context, eventID string) ([]eventform.Attachment, error)
+	ListEventTags          func(ctx context.Context) ([]eventform.Option, error)
+	ListEventTagsForEvent  func(ctx context.Context, eventID string) ([]string, error)
+	SearchAttendees        func(ctx context.Context, query string) ([]eventform.Option, error)
+	ListAttendeesForEvent  func(ctx context.Context, eventID string) ([]eventform.SelectedOption, error)
+	SetEventTagAssignments func(ctx context.Context, eventID string, tagIDs []string) error
+	SyncEventAttendees     func(ctx context.Context, eventID string, attendeeRefs []string) error
+	ListEventAttachments   func(ctx context.Context, eventID string) ([]eventform.Attachment, error)
 
 	// Phase 6 — schedule dashboard read-only projection callback.
 	// Nillable; when nil the dashboard renders empty stats / widgets.

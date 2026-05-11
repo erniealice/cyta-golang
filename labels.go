@@ -10,15 +10,15 @@ package cyta
 
 // EventLabels holds all translatable strings for the event (schedule) module.
 type EventLabels struct {
-	Page    EventPageLabels    `json:"page"`
-	Buttons EventButtonLabels  `json:"buttons"`
-	Columns EventColumnLabels  `json:"columns"`
-	Empty   EventEmptyLabels   `json:"empty"`
-	Form    EventFormLabels    `json:"form"`
-	Actions EventActionLabels  `json:"actions"`
-	Detail  EventDetailLabels  `json:"detail"`
-	Tabs    EventTabLabels     `json:"tabs"`
-	Confirm EventConfirmLabels `json:"confirm"`
+	Page      EventPageLabels            `json:"page"`
+	Buttons   EventButtonLabels          `json:"buttons"`
+	Columns   EventColumnLabels          `json:"columns"`
+	Empty     EventEmptyLabels           `json:"empty"`
+	Form      EventFormLabels            `json:"form"`
+	Actions   EventActionLabels          `json:"actions"`
+	Detail    EventDetailLabels          `json:"detail"`
+	Tabs      EventTabLabels             `json:"tabs"`
+	Confirm   EventConfirmLabels         `json:"confirm"`
 	Errors    EventErrorLabels           `json:"errors"`
 	Status    EventStatusLabels          `json:"status"`
 	Calendar  EventCalendarPopoverLabels `json:"calendar"`
@@ -57,10 +57,10 @@ type ScheduleDashboardLabels struct {
 // "View day" preserves existing day-view nav, "New event at HH:MM" opens
 // the event drawer pre-seeded with that time.
 type EventCalendarPopoverLabels struct {
-	ViewDay     string `json:"viewDay"`
-	NewEventAt  string `json:"newEventAt"`  // template: "New event at {{time}}"
-	NewEvent    string `json:"newEvent"`    // fallback when no time available
-	MoreEvents  string `json:"moreEvents"`  // "+N more events"
+	ViewDay    string `json:"viewDay"`
+	NewEventAt string `json:"newEventAt"` // template: "New event at {{time}}"
+	NewEvent   string `json:"newEvent"`   // fallback when no time available
+	MoreEvents string `json:"moreEvents"` // "+N more events"
 }
 
 type EventPageLabels struct {

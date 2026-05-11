@@ -20,9 +20,9 @@ import (
 	cyta "github.com/erniealice/cyta-golang"
 	eventmod "github.com/erniealice/cyta-golang/views/event"
 	eventtagmod "github.com/erniealice/cyta-golang/views/event_tag"
+	"github.com/erniealice/espyna-golang/reference"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	eventpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event"
-	"github.com/erniealice/espyna-golang/reference"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 	pyeza "github.com/erniealice/pyeza-golang"
 )

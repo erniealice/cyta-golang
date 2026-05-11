@@ -25,8 +25,9 @@ type SelectedOption struct {
 
 // Data is the template data passed into event-drawer-form.html. Field names
 // align to the form-control names used by handlers_save.go:
-//   name, all_day, start_date, start_time, end_date, end_time,
-//   notes, status, invitees (csv), tag_ids (csv).
+//
+//	name, all_day, start_date, start_time, end_date, end_time,
+//	notes, status, invitees (csv), tag_ids (csv).
 type Data struct {
 	// Form metadata
 	FormAction string
@@ -47,12 +48,12 @@ type Data struct {
 	StatusOptions []Option
 
 	// Tag multi-picker (workspace-scoped tag list with selected state)
-	TagOptions      []Option
-	SelectedTags    []SelectedOption
+	TagOptions   []Option
+	SelectedTags []SelectedOption
 
 	// Attendee multi-picker (workspace_user + client union)
-	AttendeeOptions     []Option
-	SelectedAttendees   []SelectedOption
+	AttendeeOptions   []Option
+	SelectedAttendees []SelectedOption
 
 	// Labels (flat — template reads .Labels.* directly)
 	Labels       Labels
@@ -107,4 +108,3 @@ type Labels struct {
 	AttachmentsLabel string
 	AttachmentsHint  string
 }
-

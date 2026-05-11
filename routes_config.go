@@ -25,49 +25,49 @@ type EventRoutes struct {
 	// Attachment routes
 	AttachmentUploadURL string `json:"attachment_upload_url"`
 	AttachmentDeleteURL string `json:"attachment_delete_url"`
-	CalendarDataURL  string `json:"calendar_data_url"`
-	DashboardURL     string `json:"dashboard_url"`
+	CalendarDataURL     string `json:"calendar_data_url"`
+	DashboardURL        string `json:"dashboard_url"`
 }
 
 // DefaultEventRoutes returns an EventRoutes populated from package-level constants.
 func DefaultEventRoutes() EventRoutes {
 	return EventRoutes{
-		ActiveNav:        "schedule",
-		ActiveSubNav:     "schedule",
-		ListURL:          EventListURL,
-		DetailURL:        EventDetailURL,
-		AddURL:           EventAddURL,
-		EditURL:          EventEditURL,
-		DeleteURL:        EventDeleteURL,
-		BulkDeleteURL:    EventBulkDeleteURL,
-		SetStatusURL:     EventSetStatusURL,
-		BulkSetStatusURL: EventBulkSetStatusURL,
+		ActiveNav:           "schedule",
+		ActiveSubNav:        "schedule",
+		ListURL:             EventListURL,
+		DetailURL:           EventDetailURL,
+		AddURL:              EventAddURL,
+		EditURL:             EventEditURL,
+		DeleteURL:           EventDeleteURL,
+		BulkDeleteURL:       EventBulkDeleteURL,
+		SetStatusURL:        EventSetStatusURL,
+		BulkSetStatusURL:    EventBulkSetStatusURL,
 		TabActionURL:        EventTabActionURL,
 		CalendarURL:         CalendarURL,
 		AttachmentUploadURL: EventAttachmentUploadURL,
 		AttachmentDeleteURL: EventAttachmentDeleteURL,
-		CalendarDataURL:  CalendarDataURL,
-		DashboardURL:     ScheduleDashboardURL,
+		CalendarDataURL:     CalendarDataURL,
+		DashboardURL:        ScheduleDashboardURL,
 	}
 }
 
 // RouteMap returns a map[string]string for template URL resolution.
 func (r EventRoutes) RouteMap() map[string]string {
 	return map[string]string{
-		"event.list":          r.ListURL,
-		"event.detail":        r.DetailURL,
-		"event.add":           r.AddURL,
-		"event.edit":          r.EditURL,
-		"event.delete":        r.DeleteURL,
-		"event.bulk_delete":     r.BulkDeleteURL,
-		"event.set_status":      r.SetStatusURL,
-		"event.bulk_set_status": r.BulkSetStatusURL,
-		"event.tab_action":           r.TabActionURL,
-		"event.attachment_upload":    r.AttachmentUploadURL,
-		"event.attachment_delete":    r.AttachmentDeleteURL,
-		"calendar.view":              r.CalendarURL,
-		"calendar.data":       r.CalendarDataURL,
-		"event.dashboard":     r.DashboardURL,
+		"event.list":              r.ListURL,
+		"event.detail":            r.DetailURL,
+		"event.add":               r.AddURL,
+		"event.edit":              r.EditURL,
+		"event.delete":            r.DeleteURL,
+		"event.bulk_delete":       r.BulkDeleteURL,
+		"event.set_status":        r.SetStatusURL,
+		"event.bulk_set_status":   r.BulkSetStatusURL,
+		"event.tab_action":        r.TabActionURL,
+		"event.attachment_upload": r.AttachmentUploadURL,
+		"event.attachment_delete": r.AttachmentDeleteURL,
+		"calendar.view":           r.CalendarURL,
+		"calendar.data":           r.CalendarDataURL,
+		"event.dashboard":         r.DashboardURL,
 	}
 }
 

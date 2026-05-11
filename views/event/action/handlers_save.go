@@ -15,11 +15,11 @@ import (
 )
 
 // handleSave is the unified POST handler for both Add and Edit. It:
-//   1. Parses the multipart form body
-//   2. Creates or updates the event
-//   3. Sets tag assignments via SetEventTagAssignments (atomic replace)
-//   4. Syncs attendees via SyncEventAttendees
-//   5. Returns an HX-Redirect to the event detail page (or HX-Trigger for in-place refresh)
+//  1. Parses the multipart form body
+//  2. Creates or updates the event
+//  3. Sets tag assignments via SetEventTagAssignments (atomic replace)
+//  4. Syncs attendees via SyncEventAttendees
+//  5. Returns an HX-Redirect to the event detail page (or HX-Trigger for in-place refresh)
 //
 // existingID = "" for Add (new event), or the event ID for Edit.
 //
@@ -219,5 +219,5 @@ var (
 
 type formErr struct{ msg string }
 
-func newFormErr(s string) error           { return &formErr{msg: s} }
-func (e *formErr) Error() string          { return e.msg }
+func newFormErr(s string) error  { return &formErr{msg: s} }
+func (e *formErr) Error() string { return e.msg }

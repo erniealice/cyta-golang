@@ -49,6 +49,10 @@ var eventTagSearchFields = []string{"name", "description"}
 // NewView creates the event-tag list view (full page).
 func NewView(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("event_tag", "list") {
+			return view.Forbidden("event_tag:list")
+		}
+
 		status := parseStatus(viewCtx)
 
 		columns := eventTagColumns(deps.Labels)
@@ -143,7 +147,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string, p tablepar
 	}
 
 	l := deps.Labels
-	rows := buildTableRows(resp.GetEventTagList(), l, deps.Routes, inUseIDs, perms)
+	rows := buildTableRows(resp.GetEventTagList(), l, deps.CommonLabels, deps.Routes, inUseIDs, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	// Refresh URL preserves the tab by including ?status= in the query.
@@ -171,10 +175,11 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string, p tablepar
 	var primaryAction *types.PrimaryAction
 	if status == "active" {
 		primaryAction = &types.PrimaryAction{
-			Label:     l.Buttons.AddTag,
-			ActionURL: deps.Routes.AddURL,
-			Icon:      "icon-plus",
-			Disabled:  !perms.Can("event_tag", "create"),
+			Label:           l.Buttons.AddTag,
+			ActionURL:       deps.Routes.AddURL,
+			Icon:            "icon-plus",
+			Disabled:        !perms.Can("event_tag", "create"),
+			DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "event_tag:create"),
 		}
 	}
 
@@ -221,7 +226,7 @@ func eventTagColumns(l cyta.EventTagLabels) []types.TableColumn {
 // emit the markup as a "raw" HTML cell (pyeza table renders {Type: "html"}
 // as-is). If "html" type is unavailable in this pyeza version, falling back
 // to a "text" cell is safe — the dot simply won't appear.
-func buildTableRows(tags []*eventtagpb.EventTag, l cyta.EventTagLabels, routes cyta.EventTagRoutes, inUseIDs map[string]bool, perms *types.UserPermissions) []types.TableRow {
+func buildTableRows(tags []*eventtagpb.EventTag, l cyta.EventTagLabels, common pyeza.CommonLabels, routes cyta.EventTagRoutes, inUseIDs map[string]bool, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, t := range tags {
 		active := t.GetActive()
@@ -244,13 +249,15 @@ func buildTableRows(tags []*eventtagpb.EventTag, l cyta.EventTagLabels, routes c
 			color, color,
 		)
 
+		canUpdate := perms.Can("event_tag", "update")
 		actions := []types.TableAction{
 			{
-				Type:     "edit",
-				Label:    l.Actions.Edit,
-				Action:   "edit",
-				URL:      route.ResolveURL(routes.EditURL, "id", id),
-				Disabled: !perms.Can("event_tag", "update"),
+				Type:            "edit",
+				Label:           l.Actions.Edit,
+				Action:          "edit",
+				URL:             route.ResolveURL(routes.EditURL, "id", id),
+				Disabled:        !canUpdate,
+				DisabledTooltip: fmt.Sprintf(common.Errors.MissingPermission, "event_tag:update"),
 			},
 		}
 		deleteAction := types.TableAction{
@@ -267,6 +274,7 @@ func buildTableRows(tags []*eventtagpb.EventTag, l cyta.EventTagLabels, routes c
 			deleteAction.DisabledTooltip = "Cannot delete: in use by one or more events"
 		} else if !perms.Can("event_tag", "delete") {
 			deleteAction.Disabled = true
+			deleteAction.DisabledTooltip = fmt.Sprintf(common.Errors.MissingPermission, "event_tag:delete")
 		}
 		actions = append(actions, deleteAction)
 

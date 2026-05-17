@@ -89,6 +89,10 @@ func eventStatusVariant(s eventpb.EventStatus) string {
 // NewView creates the event detail view.
 func NewView(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("event", "read") {
+			return view.Forbidden("event:read")
+		}
+
 		id := viewCtx.Request.PathValue("id")
 
 		resp, err := deps.ReadEvent(ctx, &eventpb.ReadEventRequest{
@@ -185,6 +189,10 @@ func loadTabData(ctx context.Context, deps *DetailViewDeps, pageData *PageData, 
 // NewTabAction creates the tab action view (partial — returns only the tab content).
 func NewTabAction(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("event", "read") {
+			return view.Forbidden("event:read")
+		}
+
 		id := viewCtx.Request.PathValue("id")
 		tab := viewCtx.Request.PathValue("tab")
 		if tab == "" {

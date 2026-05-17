@@ -59,7 +59,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("event", "create") {
-			return htmxError(deps.Labels.Errors.NameRequired)
+			return htmxError(fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "event:create"))
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -113,7 +113,7 @@ func NewEditAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("event", "update") {
-			return htmxError(deps.Labels.Errors.NameRequired)
+			return htmxError(fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "event:update"))
 		}
 
 		id := viewCtx.Request.PathValue("id")
@@ -215,7 +215,7 @@ func NewDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("event", "delete") {
-			return htmxError(deps.Labels.Errors.NameRequired)
+			return htmxError(fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "event:delete"))
 		}
 
 		id := viewCtx.Request.URL.Query().Get("id")
@@ -244,7 +244,7 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("event", "delete") {
-			return htmxError(deps.Labels.Errors.NameRequired)
+			return htmxError(fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "event:delete"))
 		}
 
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
@@ -272,7 +272,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("event", "update") {
-			return htmxError(deps.Labels.Errors.NameRequired)
+			return htmxError(fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "event:update"))
 		}
 
 		id := viewCtx.Request.URL.Query().Get("id")
@@ -309,7 +309,7 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("event", "update") {
-			return htmxError(deps.Labels.Errors.NameRequired)
+			return htmxError(fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "event:update"))
 		}
 
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)

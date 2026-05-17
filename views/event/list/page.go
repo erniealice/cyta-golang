@@ -36,6 +36,9 @@ type PageData struct {
 func NewView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("event", "list") {
+			return view.Forbidden("event:list")
+		}
 
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
@@ -50,7 +53,7 @@ func NewView(deps *ListViewDeps) view.View {
 
 		l := deps.Labels
 		columns := eventColumns(l)
-		rows := buildTableRows(resp.GetData(), status, l, deps.Routes, perms)
+		rows := buildTableRows(resp.GetData(), status, l, deps.CommonLabels, deps.Routes, perms)
 		types.ApplyColumnStyles(columns, rows)
 
 		tableConfig := &types.TableConfig{
@@ -75,7 +78,7 @@ func NewView(deps *ListViewDeps) view.View {
 				ActionURL:       deps.Routes.AddURL,
 				Icon:            "icon-plus",
 				Disabled:        !perms.Can("event", "create"),
-				DisabledTooltip: l.Errors.NameRequired,
+				DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "event:create"),
 			},
 		}
 		types.ApplyTableSettings(tableConfig)
@@ -126,6 +129,7 @@ func buildTableRows(
 	events []*eventpb.Event,
 	status string,
 	l cyta.EventLabels,
+	common pyeza.CommonLabels,
 	routes cyta.EventRoutes,
 	perms *types.UserPermissions,
 ) []types.TableRow {
@@ -167,8 +171,8 @@ func buildTableRows(
 			},
 			Actions: []types.TableAction{
 				{Type: "view", Label: l.Actions.Edit, Action: "view", Href: detailURL},
-				{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit, Disabled: !perms.Can("event", "update"), DisabledTooltip: l.Errors.NameRequired},
-				{Type: "delete", Label: l.Actions.Delete, Action: "delete", URL: routes.DeleteURL, ItemName: name, Disabled: !perms.Can("event", "delete"), DisabledTooltip: l.Errors.NameRequired},
+				{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit, Disabled: !perms.Can("event", "update"), DisabledTooltip: fmt.Sprintf(common.Errors.MissingPermission, "event:update")},
+				{Type: "delete", Label: l.Actions.Delete, Action: "delete", URL: routes.DeleteURL, ItemName: name, Disabled: !perms.Can("event", "delete"), DisabledTooltip: fmt.Sprintf(common.Errors.MissingPermission, "event:delete")},
 			},
 		})
 	}

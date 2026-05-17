@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -103,19 +104,50 @@ func handleSave(ctx context.Context, viewCtx *view.ViewContext, deps *Deps, exis
 		return htmxRefresh()
 	}
 
-	// Tags — atomic replace
+	// 2026-05-14 permission-gates §Plan E3 / conflict C1: child-entity mutations
+	// (tags, attendees, clients) gate on their own catalog perms even when the
+	// parent event:update gate has passed. A user with event:update but lacking
+	// event_attendee:*/event_client:*/event_tag:* must not be able to mutate
+	// those assignments via the event drawer.
+	perms := view.GetUserPermissions(ctx)
+
+	// Tags — atomic replace (gate on event_tag:update — atomic replace covers create/delete)
 	if deps.SetEventTagAssignments != nil {
 		tagIDs := splitCSV(r.FormValue("tag_ids"))
-		if err := deps.SetEventTagAssignments(ctx, eventID, tagIDs); err != nil {
+		if !perms.Can("event_tag", "update") {
+			log.Printf("SetEventTagAssignments skipped for event %s — missing event_tag:update", eventID)
+			_ = tagIDs
+		} else if err := deps.SetEventTagAssignments(ctx, eventID, tagIDs); err != nil {
 			log.Printf("SetEventTagAssignments(%s) failed: %v", eventID, err)
 			// Soft-fail: event saved; tags didn't. Surface via header but don't 422.
 		}
 	}
 
-	// Attendees — sync (ref scheme: "user:<id>" or "client:<id>")
+	// Attendees — sync (ref scheme: "user:<id>" or "client:<id>"). Per Plan E3:
+	// require event_attendee:* for user refs and event_client:* for client refs.
+	// We gate the entire sync call on the union of perms needed for the refs
+	// actually present in the form. Missing perms → skip with log (soft fail).
 	if deps.SyncEventAttendees != nil {
 		attendees := splitCSV(r.FormValue("invitees"))
-		if err := deps.SyncEventAttendees(ctx, eventID, attendees); err != nil {
+		hasUserRefs := false
+		hasClientRefs := false
+		for _, a := range attendees {
+			if strings.HasPrefix(a, "client:") {
+				hasClientRefs = true
+			} else {
+				hasUserRefs = true
+			}
+		}
+		missing := []string{}
+		if hasUserRefs && !perms.Can("event_attendee", "update") {
+			missing = append(missing, "event_attendee:update")
+		}
+		if hasClientRefs && !perms.Can("event_client", "update") {
+			missing = append(missing, "event_client:update")
+		}
+		if len(missing) > 0 {
+			log.Printf("SyncEventAttendees skipped for event %s — missing %s", eventID, fmt.Sprint(missing))
+		} else if err := deps.SyncEventAttendees(ctx, eventID, attendees); err != nil {
 			log.Printf("SyncEventAttendees(%s) failed: %v", eventID, err)
 		}
 	}

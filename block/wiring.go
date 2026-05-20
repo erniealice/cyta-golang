@@ -510,9 +510,29 @@ func wireEventTagDeps(deps *eventtagmod.ModuleDeps, uc *ucAggregate) {
 // Schedule dashboard wiring
 // ---------------------------------------------------------------------------
 
-// wireScheduleDashboard sets deps.GetScheduleDashboardData if
-// useCases.Event.Dashboard is non-nil. The workspace ID is extracted from
-// the request context via consumer.GetWorkspaceIDFromContext.
+// wireScheduleDashboard sets deps.GetScheduleDashboardData if the schedule
+// dashboard service sub-aggregate is non-nil. The workspace ID is extracted
+// from the request context via consumer.GetWorkspaceIDFromContext.
+//
+// Per Wave B P1.C.7 (docs/plan/20260520-service-domain-migration/), the
+// schedule dashboard relocated from the entity-layer
+// `EventUseCases.Dashboard` flat field at
+// `packages/espyna-golang/internal/application/usecases/event/usecases.go:49`
+// into the service-driven category at
+// `packages/espyna-golang/internal/application/usecases/service/dashboard/schedule/`.
+// This reflection navigator follows that move:
+//
+//	Aggregate
+//	  .Service (*ServiceUseCases)
+//	    .Dashboard (*DashboardUseCases)
+//	      .Schedule (*schedule.UseCases)
+//	        .GetScheduleDashboard (*GetScheduleDashboardUseCase)
+//	          .Execute(ctx, *scheduledashpb.GetScheduleDashboardRequest) → (*scheduledashpb.GetScheduleDashboardResponse, error)
+//
+// The proto-shaped Request/Response shapes (WorkspaceId / NowMillis;
+// ScheduleStats / ScheduleTagSlice) are accessed via reflection-by-name to
+// keep cyta independent of espyna. The view-side eventdashboard.Response
+// shape is unchanged — translation happens here.
 func wireScheduleDashboard(deps *eventmod.ModuleDeps, raw any) {
 	if raw == nil {
 		return
@@ -521,17 +541,26 @@ func wireScheduleDashboard(deps *eventmod.ModuleDeps, raw any) {
 	if uc == nil {
 		return
 	}
-	// Navigate: Aggregate.Event (*EventUseCases).Dashboard (*GetScheduleDashboardPageDataUseCase)
-	ev := ptrField(uc.v, "Event")
-	if !ev.IsValid() {
+	// Navigate: Aggregate.Service.Dashboard.Schedule.GetScheduleDashboard
+	svc := ptrField(uc.v, "Service")
+	if !svc.IsValid() {
 		return
 	}
-	dashField := ev.FieldByName("Dashboard")
+	dash := svc.FieldByName("Dashboard")
+	if !dash.IsValid() || dash.Kind() != reflect.Ptr || dash.IsNil() {
+		return
+	}
+	dashStruct := dash.Elem()
+	sched := dashStruct.FieldByName("Schedule")
+	if !sched.IsValid() || sched.Kind() != reflect.Ptr || sched.IsNil() {
+		return
+	}
+	schedStruct := sched.Elem()
+	dashField := schedStruct.FieldByName("GetScheduleDashboard")
 	if !dashField.IsValid() || dashField.Kind() != reflect.Ptr || dashField.IsNil() {
 		return
 	}
-	dashUC := dashField // pointer to GetScheduleDashboardPageDataUseCase
-	m := dashUC.MethodByName("Execute")
+	m := dashField.MethodByName("Execute")
 	if !m.IsValid() {
 		return
 	}
@@ -546,11 +575,14 @@ func wireScheduleDashboard(deps *eventmod.ModuleDeps, raw any) {
 			workspaceID = consumer.GetWorkspaceIDFromContext(ctx)
 		}
 		reqPtr := reflect.New(reqType)
-		if f := reqPtr.Elem().FieldByName("WorkspaceID"); f.IsValid() && f.CanSet() {
+		// Proto-generated field name: WorkspaceId (lowercased `id`, not `ID`).
+		if f := reqPtr.Elem().FieldByName("WorkspaceId"); f.IsValid() && f.CanSet() {
 			f.SetString(workspaceID)
 		}
-		if f := reqPtr.Elem().FieldByName("Now"); f.IsValid() && f.CanSet() {
-			f.Set(reflect.ValueOf(time.Now()))
+		// Proto NowMillis is *int64; zero/unset means "use server time".
+		if f := reqPtr.Elem().FieldByName("NowMillis"); f.IsValid() && f.CanSet() {
+			nowMs := time.Now().UnixMilli()
+			f.Set(reflect.ValueOf(&nowMs))
 		}
 		results := m.Call([]reflect.Value{reflect.ValueOf(ctx), reqPtr})
 		if len(results) < 2 {
@@ -567,29 +599,61 @@ func wireScheduleDashboard(deps *eventmod.ModuleDeps, raw any) {
 			respVal = respVal.Elem()
 		}
 
-		// Map Stats sub-struct fields
+		// Map Stats sub-message fields (proto *ScheduleStats; pointer-to-struct).
 		var today, thisWeek, byTagCount, utilizationPct int64
 		if stats := respVal.FieldByName("Stats"); stats.IsValid() {
-			today = stats.FieldByName("Today").Int()
-			thisWeek = stats.FieldByName("ThisWeek").Int()
-			byTagCount = stats.FieldByName("ByTag").Int()
-			utilizationPct = stats.FieldByName("UtilizationPct").Int()
-		}
-		// ByTag: map[string]int64
-		var byTag map[string]int64
-		if f := respVal.FieldByName("ByTag"); f.IsValid() && !f.IsNil() {
-			if v, ok := f.Interface().(map[string]int64); ok {
-				byTag = v
+			if stats.Kind() == reflect.Ptr {
+				if !stats.IsNil() {
+					stats = stats.Elem()
+				}
+			}
+			if stats.IsValid() && stats.Kind() == reflect.Struct {
+				if f := stats.FieldByName("Today"); f.IsValid() {
+					today = f.Int()
+				}
+				if f := stats.FieldByName("ThisWeek"); f.IsValid() {
+					thisWeek = f.Int()
+				}
+				if f := stats.FieldByName("ByTag"); f.IsValid() {
+					byTagCount = f.Int()
+				}
+				if f := stats.FieldByName("UtilizationPct"); f.IsValid() {
+					utilizationPct = f.Int()
+				}
 			}
 		}
-		// Upcoming: []*eventpb.Event
+		// ByTag: []*ScheduleTagSlice → map[string]int64 (the view-side
+		// eventdashboard.Response.ByTag shape is unchanged from the previous
+		// entity-layer Go-only design). Reflect each slice element by field
+		// name to avoid importing the proto package.
+		byTag := map[string]int64{}
+		if f := respVal.FieldByName("ByTag"); f.IsValid() && f.Kind() == reflect.Slice {
+			for i := 0; i < f.Len(); i++ {
+				row := f.Index(i)
+				if row.Kind() == reflect.Ptr {
+					if row.IsNil() {
+						continue
+					}
+					row = row.Elem()
+				}
+				if row.Kind() != reflect.Struct {
+					continue
+				}
+				tagF := row.FieldByName("Tag")
+				countF := row.FieldByName("Count")
+				if tagF.IsValid() && countF.IsValid() {
+					byTag[tagF.String()] = countF.Int()
+				}
+			}
+		}
+		// Upcoming: []*eventpb.Event (unchanged from previous design).
 		var upcoming []*eventpb.Event
 		if f := respVal.FieldByName("Upcoming"); f.IsValid() && !f.IsNil() {
 			if v, ok := f.Interface().([]*eventpb.Event); ok {
 				upcoming = v
 			}
 		}
-		// ByDayLabels / ByDayValues
+		// ByDayLabels / ByDayValues (unchanged from previous design).
 		var byDayLabels []string
 		var byDayValues []float64
 		if f := respVal.FieldByName("ByDayLabels"); f.IsValid() && !f.IsNil() {
@@ -601,9 +665,6 @@ func wireScheduleDashboard(deps *eventmod.ModuleDeps, raw any) {
 			if v, ok := f.Interface().([]float64); ok {
 				byDayValues = v
 			}
-		}
-		if byTag == nil {
-			byTag = map[string]int64{}
 		}
 		return &eventdashboard.Response{
 			Today:          today,

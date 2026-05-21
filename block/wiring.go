@@ -517,7 +517,7 @@ func wireEventTagDeps(deps *eventtagmod.ModuleDeps, uc *ucAggregate) {
 // Per Wave B P1.C.7 (docs/plan/20260520-service-domain-migration/), the
 // schedule dashboard relocated from the entity-layer
 // `EventUseCases.Dashboard` flat field at
-// `packages/espyna-golang/internal/application/usecases/event/usecases.go:49`
+// `packages/espyna-golang/internal/application/usecases/domain/event/usecases.go:49`
 // into the service-driven category at
 // `packages/espyna-golang/internal/application/usecases/service/dashboard/schedule/`.
 // This reflection navigator follows that move:

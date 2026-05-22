@@ -3,6 +3,7 @@ package calendar
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	cyta "github.com/erniealice/cyta-golang"
@@ -180,6 +181,7 @@ func NewView(deps *ViewDeps) view.View {
 		todayDate := now
 		tomorrowDate := now.AddDate(0, 0, 1)
 
+		eventDetailBase := strings.Split(deps.Routes.DetailURL, "{id}")[0]
 		sampleEvents := []CalendarEvent{
 			{
 				ID:        "ev-001",
@@ -187,7 +189,7 @@ func NewView(deps *ViewDeps) view.View {
 				StartTime: "10:00 AM",
 				EndTime:   "11:00 AM",
 				Status:    "confirmed",
-				DetailURL: fmt.Sprintf("/app/schedule/detail/ev-001"),
+				DetailURL: eventDetailBase + "ev-001",
 			},
 			{
 				ID:        "ev-002",
@@ -195,7 +197,7 @@ func NewView(deps *ViewDeps) view.View {
 				StartTime: "2:00 PM",
 				EndTime:   "3:30 PM",
 				Status:    "tentative",
-				DetailURL: fmt.Sprintf("/app/schedule/detail/ev-002"),
+				DetailURL: eventDetailBase + "ev-002",
 			},
 			{
 				ID:        "ev-003",
@@ -203,7 +205,7 @@ func NewView(deps *ViewDeps) view.View {
 				StartTime: "9:00 AM",
 				EndTime:   "12:00 PM",
 				Status:    "confirmed",
-				DetailURL: fmt.Sprintf("/app/schedule/detail/ev-003"),
+				DetailURL: eventDetailBase + "ev-003",
 			},
 			{
 				ID:        "ev-004",
@@ -211,7 +213,7 @@ func NewView(deps *ViewDeps) view.View {
 				StartTime: "3:00 PM",
 				EndTime:   "4:00 PM",
 				Status:    "cancelled",
-				DetailURL: fmt.Sprintf("/app/schedule/detail/ev-004"),
+				DetailURL: eventDetailBase + "ev-004",
 			},
 		}
 

@@ -31,6 +31,7 @@ type SelectedOption struct {
 type Data struct {
 	// Form metadata
 	FormAction string
+	WorkspaceID string // injected by C1: populated by ViewAdapter.injectWorkspaceID for action_workspace_guard
 	IsEdit     bool
 	ID         string
 

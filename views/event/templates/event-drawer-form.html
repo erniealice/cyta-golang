@@ -16,6 +16,7 @@ Required data: form.Data (see views/event/form/data.go)
       hx-swap="none"
       hx-on::after-request="lf.Sheet.handleResponse(event)"
       data-event-drawer-form>
+    {{actionForm .FormAction .WorkspaceID}}
 
     {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
 

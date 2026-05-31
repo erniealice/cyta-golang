@@ -14,7 +14,7 @@ Required data: form.Data (see views/event/form/data.go)
 <form hx-post="{{.FormAction}}"
       hx-encoding="multipart/form-data"
       hx-swap="none"
-      hx-on::after-request="lf.Sheet.handleResponse(event)"
+      data-hx-on="sheet-response"
       data-event-drawer-form>
     {{actionForm .FormAction .WorkspaceID}}
 

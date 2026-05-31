@@ -30,10 +30,11 @@ type SelectedOption struct {
 //	notes, status, invitees (csv), tag_ids (csv).
 type Data struct {
 	// Form metadata
-	FormAction string
+	FormAction  string
 	WorkspaceID string // injected by C1: populated by ViewAdapter.injectWorkspaceID for action_workspace_guard
-	IsEdit     bool
-	ID         string
+	Nonce       string // injected by C1: populated by ViewAdapter.injectPageData (reflection, same as WorkspaceID)
+	IsEdit      bool
+	ID          string
 
 	// Field values (always strings in template land — Go zero-value renders empty)
 	Name      string

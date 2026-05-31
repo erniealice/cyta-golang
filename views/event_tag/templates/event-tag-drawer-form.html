@@ -35,8 +35,7 @@ Data: .Name, .Description, .Color, .Active, .ID, .FormAction, .IsEdit, .CommonLa
                 <span class="form-label">{{.Labels.Color}}</span>
                 <div class="color-picker-swatches" role="group" aria-label="Preset colors">
                     {{range $c := (list "#E53E3E" "#DD6B20" "#D69E2E" "#B45309" "#059669" "#0D9488" "#2B6CB0" "#4F46E5" "#805AD5" "#6842B8" "#DC2626" "#6B7280")}}
-                    <button type="button" class="color-picker-swatch" style="background-color: {{$c}}" aria-label="Use {{$c}}"
-                            onclick="var g=this.closest('.form-group');var i=g.querySelector('input[type=color]');i.value='{{$c}}';g.querySelector('.color-picker-band').style.backgroundColor='{{$c}}';i.dispatchEvent(new Event('input'));"></button>
+                    <button type="button" class="color-picker-swatch" style="background-color: {{$c}}" aria-label="Use {{$c}}" data-color="{{$c}}"></button>
                     {{end}}
                 </div>
                 <label class="color-picker-field">
@@ -44,7 +43,7 @@ Data: .Name, .Description, .Color, .Active, .ID, .FormAction, .IsEdit, .CommonLa
                     <span class="color-picker-trigger">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
                     </span>
-                    <input type="color" id="color" name="color" value="{{if .Color}}{{.Color}}{{else}}#000000{{end}}" class="color-picker-native" aria-label="{{.Labels.Color}}" oninput="this.closest('.color-picker-field').querySelector('.color-picker-band').style.backgroundColor=this.value">
+                    <input type="color" id="color" name="color" value="{{if .Color}}{{.Color}}{{else}}#000000{{end}}" class="color-picker-native" aria-label="{{.Labels.Color}}">
                 </label>
             </div>
         </div>
@@ -59,4 +58,54 @@ Data: .Name, .Description, .Color, .Active, .ID, .FormAction, .IsEdit, .CommonLa
 
     {{template "sheet-form-footer" (dict "CommonLabels" .CommonLabels "ShowCancel" true "IsEdit" .IsEdit)}}
 </form>
+{{/*
+  Color-picker delegated handlers (CSP-safe). Replaces the former inline
+  onclick= on .color-picker-swatch and oninput= on .color-picker-native with
+  document-level lf.on() delegation (survives HTMX drawer swaps; binds once per
+  session via the lf.cyta.eventTag.__colorPickerBound guard). Behaviour-preserving:
+    swatch click  -> set the sibling native <input type=color> value, paint the
+                     band, and dispatch a synthetic 'input' (the prior inline body).
+    native input  -> paint the band to the picked value (the prior inline body).
+  lf.on is provided by pyeza's lf-on.js, loaded by the app-shell that hosts this
+  drawer. Owned by cyta (lf.cyta.*, provenance invariant). Nonced for strict CSP.
+*/}}
+<script nonce="{{.Nonce}}">
+(function () {
+    window.lf = window.lf || {};
+    if (typeof lf.on !== 'function') { return; }
+    lf.cyta = lf.cyta || {};
+    lf.cyta.eventTag = lf.cyta.eventTag || {};
+    if (lf.cyta.eventTag.__colorPickerBound) { return; }
+    lf.cyta.eventTag.__colorPickerBound = true;
+
+    function paintBand(field, value) {
+        if (!field) { return; }
+        var band = field.querySelector('.color-picker-band');
+        if (band) { band.style.backgroundColor = value; }
+    }
+
+    // Preset swatch click: write the chosen color into the native picker, paint
+    // the band, and fire a synthetic 'input' so any listener stays in sync.
+    lf.on('click', '.color-picker-swatch', function () {
+        var color = this.getAttribute('data-color');
+        if (!color) { return; }
+        var group = this.closest('.form-group');
+        if (!group) { return; }
+        var input = group.querySelector('input[type=color]');
+        if (input) {
+            input.value = color;
+            input.dispatchEvent(new Event('input'));
+        }
+        // The synthetic 'input' above bubbles to the .color-picker-native handler
+        // below, which paints the band — but paint here too in case the input
+        // element is absent (defensive; matches the original inline behaviour).
+        paintBand(group.querySelector('.color-picker-field'), color);
+    });
+
+    // Native color input: paint the band to the live value.
+    lf.on('input', '.color-picker-native', function () {
+        paintBand(this.closest('.color-picker-field'), this.value);
+    });
+})();
+</script>
 {{end}}

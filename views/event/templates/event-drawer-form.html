@@ -150,7 +150,7 @@ Required data: form.Data (see views/event/form/data.go)
         "IsEdit" .IsEdit
     )}}
 
-    {{template "event-drawer-form-init"}}
+    {{template "event-drawer-form-init" .}}
 </form>
 {{end}}
 
@@ -162,7 +162,7 @@ elements are present.
 ================================================================================
 */}}
 {{define "event-drawer-form-init"}}
-<script>
+<script nonce="{{.Nonce}}">
 (function() {
     if (typeof window.lf === 'undefined' || !window.lf.eventDrawerForm) return;
     var form = document.querySelector('[data-event-drawer-form]:not([data-event-drawer-form-bound])');

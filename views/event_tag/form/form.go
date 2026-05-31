@@ -26,4 +26,5 @@ type Data struct {
 	Active       bool
 	Labels       Labels
 	CommonLabels any
+	Nonce        string // injected by C1: populated by ViewAdapter.injectPageData (NonceFromContext) for the inline <script nonce> that registers the color-picker delegated handlers
 }

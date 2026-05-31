@@ -38,6 +38,16 @@ type blockConfig struct {
 	enableAll bool
 	event     bool
 	eventTag  bool
+	useCases  *UseCases
+}
+
+// WithUseCases supplies the typed use-case closures to Block().
+// Required: Block() returns an error if this option is not provided.
+// Service-admin constructs the *UseCases via an adapter function that bridges
+// espyna's consumer container to cyta's typed shape (see buildCytaUseCases in
+// apps/service-admin/internal/composition/adapters.go).
+func WithUseCases(uc *UseCases) BlockOption {
+	return func(c *blockConfig) { c.useCases = uc }
 }
 
 // WithEvent registers the Event module (list, detail, CRUD, calendar).
@@ -57,12 +67,26 @@ func (c *blockConfig) wantEventTag() bool { return c.enableAll || c.eventTag }
 // Call with no options to register ALL modules. Call with specific With*() options
 // to register a subset.
 func Block(opts ...BlockOption) pyeza.AppOption {
-	cfg := &blockConfig{enableAll: len(opts) == 0}
+	cfg := &blockConfig{}
 	for _, opt := range opts {
 		opt(cfg)
 	}
+	// "Enable all modules" is derived — true when no module-toggling option was
+	// passed. Non-module options (WithUseCases) must NOT flip this off, else
+	// `Block(WithUseCases(...))` would silently register zero modules.
+	moduleSelected := cfg.event || cfg.eventTag
+	cfg.enableAll = !moduleSelected
 
 	return func(ctx *pyeza.AppContext) error {
+		// --- typed UseCases supplied via WithUseCases() ---
+		if cfg.useCases == nil {
+			return fmt.Errorf("cyta.Block: WithUseCases(...) is required")
+		}
+		if err := cfg.useCases.RequireFor(cfg); err != nil {
+			return err
+		}
+		uc := cfg.useCases // local alias for brevity
+
 		// --- Type-assert translations ---
 		translations, ok := ctx.Translations.(*lynguaV1.TranslationProvider)
 		if !ok || translations == nil {
@@ -105,13 +129,11 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				},
 			}
 
-			// Overlay with real use cases if available
-			uc := assertUseCases(ctx.UseCases)
-			if uc != nil {
-				wireEventDeps(deps, uc)
-			}
-			// Schedule dashboard (nil-safe: only wires if Event.Dashboard is present)
-			wireScheduleDashboard(deps, ctx.UseCases)
+			// Overlay with the typed use cases (compile-checked; nil leaf
+			// closures keep the stub fallbacks above).
+			wireEventDeps(deps, uc)
+			// Schedule dashboard (nil-safe: only wires if the typed slot is set).
+			wireScheduleDashboard(deps, uc)
 
 			// Wire attachment ops (nil-safe — degrade gracefully when not provided).
 			deps.UploadFile = uploadFile
@@ -144,11 +166,8 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				TableLabels:  ctx.Table,
 			}
 
-			// Overlay with real use cases if available.
-			uc := assertUseCases(ctx.UseCases)
-			if uc != nil {
-				wireEventTagDeps(eventTagDeps, uc)
-			}
+			// Overlay with the typed use cases (compile-checked).
+			wireEventTagDeps(eventTagDeps, uc)
 
 			// Reference-checker for the delete-guard. Optional — if not
 			// wired, the list page simply renders without the in-use tooltip.

@@ -142,6 +142,10 @@ func (u *UseCases) RequireFor(cfg *blockConfig) error {
 		check(u.EventTag.Update != nil, "UseCases.EventTag.Update")
 		check(u.EventTag.Delete != nil, "UseCases.EventTag.Delete")
 		check(u.EventTag.List != nil, "UseCases.EventTag.List")
+		// Required: the event-tag list page calls GetEventTagListPageData
+		// UNGUARDED (views/event_tag/list/page.go), so a missing closure is a
+		// boot error, not a silent runtime nil panic.
+		check(u.EventTag.GetListPageData != nil, "UseCases.EventTag.GetListPageData")
 	}
 
 	if len(missing) > 0 {

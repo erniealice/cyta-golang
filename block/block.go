@@ -17,9 +17,9 @@ import (
 	"fmt"
 	"log"
 
-	cyta "github.com/erniealice/cyta-golang"
-	eventmod "github.com/erniealice/cyta-golang/views/event"
-	eventtagmod "github.com/erniealice/cyta-golang/views/event_tag"
+	event "github.com/erniealice/cyta-golang/domain/event"
+	eventmod "github.com/erniealice/cyta-golang/domain/event/views/event"
+	eventtagmod "github.com/erniealice/cyta-golang/domain/event/views/event_tag"
 	"github.com/erniealice/espyna-golang/reference"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	eventpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event"
@@ -80,7 +80,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 	return func(ctx *pyeza.AppContext) error {
 		// --- typed UseCases supplied via WithUseCases() ---
 		if cfg.useCases == nil {
-			return fmt.Errorf("cyta.Block: WithUseCases(...) is required")
+			return fmt.Errorf("event.Block: WithUseCases(...) is required")
 		}
 		if err := cfg.useCases.RequireFor(cfg); err != nil {
 			return err
@@ -90,13 +90,13 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		// --- Type-assert translations ---
 		translations, ok := ctx.Translations.(*lynguaV1.TranslationProvider)
 		if !ok || translations == nil {
-			return fmt.Errorf("cyta.Block: ctx.Translations must be *lynguaV1.TranslationProvider")
+			return fmt.Errorf("event.Block: ctx.Translations must be *lynguaV1.TranslationProvider")
 		}
 
 		// --- Register Event module ---
 		if cfg.wantEvent() {
 			// Load routes (defaults + optional lyngua overrides)
-			eventRoutes := cyta.DefaultEventRoutes()
+			eventRoutes := event.DefaultEventRoutes()
 			_ = translations.LoadPathIfExists("en", ctx.BusinessType, "route.json", "event", &eventRoutes)
 
 			// Load labels — event.json is required in service translations but we
@@ -148,13 +148,13 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		// --- Register EventTag module ---
 		if cfg.wantEventTag() {
 			// Load routes (defaults + optional lyngua overrides).
-			eventTagRoutes := cyta.DefaultEventTagRoutes()
+			eventTagRoutes := event.DefaultEventTagRoutes()
 			_ = translations.LoadPathIfExists("en", ctx.BusinessType, "route.json", "event_tag", &eventTagRoutes)
 
 			// Load labels — event_tag.json has no root wrap (flat keys), so we
 			// pass "" as the dotPath. Falls back silently to zero values if
 			// the file is absent (e.g. for a tier that hasn't localized yet).
-			var eventTagLabels cyta.EventTagLabels
+			var eventTagLabels event.EventTagLabels
 			if err := translations.LoadPathIfExists("en", ctx.BusinessType, "event_tag.json", "", &eventTagLabels); err != nil {
 				log.Printf("Warning: Failed to load event_tag labels: %v", err)
 			}
@@ -188,9 +188,9 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 // defaultEventLabels returns EventLabels with sensible English defaults.
 // Cyta has no Default*Labels() function in its root package so we define
 // the defaults here to make Block() self-contained.
-func defaultEventLabels() cyta.EventLabels {
-	return cyta.EventLabels{
-		Page: cyta.EventPageLabels{
+func defaultEventLabels() event.EventLabels {
+	return event.EventLabels{
+		Page: event.EventPageLabels{
 			Heading:          "Events",
 			HeadingUpcoming:  "Upcoming Events",
 			HeadingConfirmed: "Confirmed Events",
@@ -198,10 +198,10 @@ func defaultEventLabels() cyta.EventLabels {
 			HeadingCancelled: "Cancelled Events",
 			Caption:          "Manage scheduled events and appointments",
 		},
-		Buttons: cyta.EventButtonLabels{
+		Buttons: event.EventButtonLabels{
 			AddEvent: "Add Event",
 		},
-		Columns: cyta.EventColumnLabels{
+		Columns: event.EventColumnLabels{
 			Name:      "Name",
 			StartDate: "Start",
 			EndDate:   "End",
@@ -210,11 +210,11 @@ func defaultEventLabels() cyta.EventLabels {
 			Status:    "Status",
 			Recurs:    "Recurs",
 		},
-		Empty: cyta.EventEmptyLabels{
+		Empty: event.EventEmptyLabels{
 			Heading:    "No events found",
 			Subheading: "No events to display.",
 		},
-		Form: cyta.EventFormLabels{
+		Form: event.EventFormLabels{
 			Name:        "Name",
 			Description: "Description",
 			StartDate:   "Start Date",
@@ -226,14 +226,14 @@ func defaultEventLabels() cyta.EventLabels {
 			Status:      "Status",
 			Recurrence:  "Recurrence",
 		},
-		Actions: cyta.EventActionLabels{
+		Actions: event.EventActionLabels{
 			Edit:      "Edit",
 			Delete:    "Delete",
 			Cancel:    "Cancel",
 			Confirm:   "Confirm",
 			Duplicate: "Duplicate",
 		},
-		Detail: cyta.EventDetailLabels{
+		Detail: event.EventDetailLabels{
 			Heading:     "Event Details",
 			Overview:    "Overview",
 			Organizer:   "Organizer",
@@ -245,7 +245,7 @@ func defaultEventLabels() cyta.EventLabels {
 			Recurrence:  "Recurrence",
 			Description: "Description",
 		},
-		Tabs: cyta.EventTabLabels{
+		Tabs: event.EventTabLabels{
 			Overview:    "Overview",
 			Attendees:   "Attendees",
 			Resources:   "Resources",
@@ -253,19 +253,19 @@ func defaultEventLabels() cyta.EventLabels {
 			Occurrences: "Occurrences",
 			Attachments: "Attachments",
 		},
-		Confirm: cyta.EventConfirmLabels{
+		Confirm: event.EventConfirmLabels{
 			DeleteTitle:   "Delete Event",
 			DeleteMessage: "Are you sure you want to delete this event? This action cannot be undone.",
 			CancelTitle:   "Cancel Event",
 			CancelMessage: "Are you sure you want to cancel this event?",
 		},
-		Errors: cyta.EventErrorLabels{
+		Errors: event.EventErrorLabels{
 			NameRequired:      "Event name is required",
 			StartDateRequired: "Start date is required",
 			EndDateRequired:   "End date is required",
 			InvalidDateRange:  "End date must be after start date",
 		},
-		Status: cyta.EventStatusLabels{
+		Status: event.EventStatusLabels{
 			Tentative: "Tentative",
 			Confirmed: "Confirmed",
 			Cancelled: "Cancelled",

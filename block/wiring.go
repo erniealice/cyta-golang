@@ -15,8 +15,8 @@ package block
 // service-admin's adapter, the only place that knows both vocabularies.
 
 import (
-	eventmod "github.com/erniealice/cyta-golang/views/event"
-	eventtagmod "github.com/erniealice/cyta-golang/views/event_tag"
+	eventmod "github.com/erniealice/cyta-golang/domain/event/views/event"
+	eventtagmod "github.com/erniealice/cyta-golang/domain/event/views/event_tag"
 )
 
 // ---------------------------------------------------------------------------

@@ -25,8 +25,8 @@ import (
 	eventresourcepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event_resource"
 	eventtagpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event_tag"
 
-	eventdashboard "github.com/erniealice/cyta-golang/views/event/dashboard"
-	eventform "github.com/erniealice/cyta-golang/views/event/form"
+	eventdashboard "github.com/erniealice/cyta-golang/domain/event/views/event/dashboard"
+	eventform "github.com/erniealice/cyta-golang/domain/event/views/event/form"
 )
 
 // UseCases declares everything cyta's Block() needs from outside.

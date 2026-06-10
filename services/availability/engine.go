@@ -1,6 +1,14 @@
 // Package availability implements a FHIR-inspired availability engine for
 // computing free time slots for resources (staff, rooms, equipment).
 //
+// Charter (hexagonal-rules §5 — private pure-helper, rule-of-three not yet met):
+//   - What it does: free-slot computation + conflict detection; pure computation.
+//   - Allowed deps: stdlib only (time — no third-party packages).
+//   - MUST NOT import: espyna, esqyma protos, pyeza, rrule-go, any DB/network package.
+//   - Current consumers: cyta domain only (block/ + domain/event/ views).
+//   - Escalation: promote to espyna internal/application/shared/availability/ when
+//     a second or third esqyma domain needs it (rule-of-three).
+//
 // Design:
 //   - Schedule (FHIR Schedule equivalent): defines a resource's working hours.
 //   - Slot (FHIR Slot equivalent): a computed free or busy window — NOT persisted.

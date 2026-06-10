@@ -1,6 +1,15 @@
 // Package recurrence expands RFC 5545 RRULE strings into concrete occurrence
 // timestamps.
 //
+// Charter (hexagonal-rules §5 — private pure-helper, rule-of-three not yet met):
+//   - What it does: RFC 5545 RRULE expansion + occurrence writing; pure computation.
+//   - Allowed deps: stdlib + github.com/teambition/rrule-go (one third-party dep).
+//   - MUST NOT import: espyna, esqyma protos, pyeza, any DB/network package.
+//   - Current consumers: cyta domain only (block/ + domain/event/ views).
+//   - Escalation: promote to espyna internal/application/shared/recurrence/ when
+//     a second or third esqyma domain needs it (rule-of-three). Future charter must
+//     allow the rrule-go import (not strictly stdlib-only).
+//
 // Design:
 //   - All times are UTC internally.
 //   - Expansion is pure domain logic; no database calls are made here.

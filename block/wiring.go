@@ -15,8 +15,7 @@ package block
 // service-admin's adapter, the only place that knows both vocabularies.
 
 import (
-	eventmod "github.com/erniealice/cyta-golang/domain/event/views/event"
-	eventtagmod "github.com/erniealice/cyta-golang/domain/event/views/event_tag"
+	event "github.com/erniealice/cyta-golang/domain/event"
 )
 
 // ---------------------------------------------------------------------------
@@ -26,7 +25,7 @@ import (
 // wireEventDeps overlays the typed Event use cases onto deps. Nil closures are
 // left as-is so block.go's stub fallbacks (for the not-yet-wired scheduling
 // backend) survive — matching the prior overlay-if-present behaviour.
-func wireEventDeps(deps *eventmod.ModuleDeps, uc *UseCases) {
+func wireEventDeps(deps *event.ModuleDeps, uc *UseCases) {
 	if uc == nil {
 		return
 	}
@@ -89,7 +88,7 @@ func wireEventDeps(deps *eventmod.ModuleDeps, uc *UseCases) {
 // The proto→view translation that this function used to perform via reflection
 // now lives in service-admin's adapter, which supplies the closure ready-made.
 // Nil → the dashboard view renders empty stats (its own nil-safe fallback).
-func wireScheduleDashboard(deps *eventmod.ModuleDeps, uc *UseCases) {
+func wireScheduleDashboard(deps *event.ModuleDeps, uc *UseCases) {
 	if uc == nil || uc.GetScheduleDashboardData == nil {
 		return
 	}
@@ -101,7 +100,7 @@ func wireScheduleDashboard(deps *eventmod.ModuleDeps, uc *UseCases) {
 // ---------------------------------------------------------------------------
 
 // wireEventTagDeps overlays the typed EventTag use cases onto deps.
-func wireEventTagDeps(deps *eventtagmod.ModuleDeps, uc *UseCases) {
+func wireEventTagDeps(deps *event.EventTagModuleDeps, uc *UseCases) {
 	if uc == nil {
 		return
 	}

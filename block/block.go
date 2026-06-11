@@ -18,8 +18,6 @@ import (
 	"log"
 
 	event "github.com/erniealice/cyta-golang/domain/event"
-	eventmod "github.com/erniealice/cyta-golang/domain/event/views/event"
-	eventtagmod "github.com/erniealice/cyta-golang/domain/event/views/event_tag"
 	"github.com/erniealice/espyna-golang/reference"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	eventpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event"
@@ -113,7 +111,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 
 			// Wire use cases — scheduling engine is not yet fully wired in espyna
 			// so we always provide stub fallbacks (matching domain_schedule.go).
-			deps := &eventmod.ModuleDeps{
+			deps := &event.ModuleDeps{
 				Routes:       eventRoutes,
 				Labels:       eventLabels,
 				CommonLabels: ctx.Common,
@@ -142,7 +140,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			deps.DeleteAttachment = deleteAttachment
 			deps.NewID = newAttachmentID
 
-			eventmod.NewModule(deps).RegisterRoutes(ctx.Routes)
+			event.NewModule(deps).RegisterRoutes(ctx.Routes)
 		}
 
 		// --- Register EventTag module ---
@@ -159,7 +157,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				log.Printf("Warning: Failed to load event_tag labels: %v", err)
 			}
 
-			eventTagDeps := &eventtagmod.ModuleDeps{
+			eventTagDeps := &event.EventTagModuleDeps{
 				Routes:       eventTagRoutes,
 				Labels:       eventTagLabels,
 				CommonLabels: ctx.Common,
@@ -177,7 +175,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				}
 			}
 
-			eventtagmod.NewModule(eventTagDeps).RegisterRoutes(ctx.Routes)
+			event.NewEventTagModule(eventTagDeps).RegisterRoutes(ctx.Routes)
 		}
 
 		log.Println("  ✓ Schedule domain initialized (cyta)")

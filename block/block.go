@@ -77,13 +77,16 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 
 	return func(ctx *pyeza.AppContext) error {
 		// --- typed UseCases supplied via WithUseCases() ---
-		if cfg.useCases == nil {
-			return fmt.Errorf("event.Block: WithUseCases(...) is required")
-		}
-		if err := cfg.useCases.RequireFor(cfg); err != nil {
+		uc := cfg.useCases
+		// FAIL-CLOSED completeness gate: a missing REQUIRED closure for an enabled
+		// module is a boot REFUSAL, NOT a silent runtime nil. MustValidate panics
+		// in dev/test (loud, stack-traced, uncatchable-by-accident) and returns a
+		// screamed boot error in prod (which this AppOption propagates → boot halt).
+		// Mirrors the AUTHZ_ENFORCE boot-guard's fail-closed posture; replaces the
+		// prior bare RequireFor call (a returned error a caller could drop).
+		if err := uc.MustValidate(cfg); err != nil {
 			return err
 		}
-		uc := cfg.useCases // local alias for brevity
 
 		// --- Type-assert translations ---
 		translations, ok := ctx.Translations.(*lynguaV1.TranslationProvider)

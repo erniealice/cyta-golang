@@ -13,5 +13,11 @@ func Describe() compose.Unit {
 		LabelJSON: compose.JSONBinding{File: "event_tag.json", Key: ""},
 		LabelName: "EventTagLabels",
 		Templates: TemplatesFS,
+		Nav: compose.NavContrib{
+			Permission: "event:list",
+			Items: []compose.NavItem{
+				{Key: "event-tags", Route: "event_tag.list", Label: "Event Tags", Icon: "icon-tag", Permission: "event:list"},
+			},
+		},
 	}
 }

@@ -49,7 +49,7 @@ import (
 //     fayna uses for its dashboard translations.
 type UseCases struct {
 	// GetWorkspaceIDFromCtx extracts the workspace ID from a request context.
-	// Wired by service-admin as consumer.GetWorkspaceIDFromContext. Used as
+	// Wired by service-admin as identity.Must(ctx).WorkspaceID. Used as
 	// the empty-workspace fallback for the schedule dashboard.
 	GetWorkspaceIDFromCtx func(ctx context.Context) string
 

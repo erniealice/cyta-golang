@@ -157,3 +157,89 @@ type StatusLabels struct {
 	Confirmed string `json:"confirmed"`
 	Cancelled string `json:"cancelled"`
 }
+
+// DefaultLabels returns Labels populated with sensible English defaults.
+func DefaultLabels() Labels {
+	return Labels{
+		Page: PageLabels{
+			Heading:          "Events",
+			HeadingUpcoming:  "Upcoming Events",
+			HeadingConfirmed: "Confirmed Events",
+			HeadingCompleted: "Completed Events",
+			HeadingCancelled: "Cancelled Events",
+			Caption:          "Manage scheduled events and appointments",
+		},
+		Buttons: ButtonLabels{
+			AddEvent: "Add Event",
+		},
+		Columns: ColumnLabels{
+			Name:      "Name",
+			StartDate: "Start",
+			EndDate:   "End",
+			Organizer: "Organizer",
+			Location:  "Location",
+			Status:    "Status",
+			Recurs:    "Recurs",
+		},
+		Empty: EmptyLabels{
+			Heading:    "No events found",
+			Subheading: "No events to display.",
+		},
+		Form: FormLabels{
+			Name:        "Name",
+			Description: "Description",
+			StartDate:   "Start Date",
+			EndDate:     "End Date",
+			Timezone:    "Timezone",
+			AllDay:      "All Day",
+			Organizer:   "Organizer",
+			Location:    "Location",
+			Status:      "Status",
+			Recurrence:  "Recurrence",
+		},
+		Actions: ActionLabels{
+			Edit:      "Edit",
+			Delete:    "Delete",
+			Cancel:    "Cancel",
+			Confirm:   "Confirm",
+			Duplicate: "Duplicate",
+		},
+		Detail: DetailLabels{
+			Heading:     "Event Details",
+			Overview:    "Overview",
+			Organizer:   "Organizer",
+			Location:    "Location",
+			Duration:    "Duration",
+			TimeRange:   "Time",
+			Status:      "Status",
+			AllDay:      "All Day",
+			Recurrence:  "Recurrence",
+			Description: "Description",
+		},
+		Tabs: TabLabels{
+			Overview:    "Overview",
+			Attendees:   "Attendees",
+			Resources:   "Resources",
+			Products:    "Products",
+			Occurrences: "Occurrences",
+			Attachments: "Attachments",
+		},
+		Confirm: ConfirmLabels{
+			DeleteTitle:   "Delete Event",
+			DeleteMessage: "Are you sure you want to delete this event? This action cannot be undone.",
+			CancelTitle:   "Cancel Event",
+			CancelMessage: "Are you sure you want to cancel this event?",
+		},
+		Errors: ErrorLabels{
+			NameRequired:      "Event name is required",
+			StartDateRequired: "Start date is required",
+			EndDateRequired:   "End date is required",
+			InvalidDateRange:  "End date must be after start date",
+		},
+		Status: StatusLabels{
+			Tentative: "Tentative",
+			Confirmed: "Confirmed",
+			Cancelled: "Cancelled",
+		},
+	}
+}

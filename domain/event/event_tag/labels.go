@@ -58,3 +58,49 @@ type ActionLabels struct {
 	Activate   string `json:"activate"`
 	Deactivate string `json:"deactivate"`
 }
+
+// DefaultLabels returns Labels populated with sensible English defaults.
+func DefaultLabels() Labels {
+	return Labels{
+		Page: PageLabels{
+			Heading:         "Event Tags",
+			HeadingActive:   "Active Tags",
+			HeadingInactive: "Inactive Tags",
+			Caption:         "Manage event tags for categorising scheduled events",
+			CaptionActive:   "Active event tags",
+			CaptionInactive: "Inactive event tags",
+		},
+		Buttons: ButtonLabels{
+			AddTag: "Add Tag",
+		},
+		Columns: ColumnLabels{
+			Name:        "Name",
+			Description: "Description",
+			Color:       "Color",
+			Status:      "Status",
+			DateCreated: "Date Created",
+		},
+		Empty: EmptyLabels{
+			ActiveTitle:     "No active tags",
+			ActiveMessage:   "No active event tags to display.",
+			InactiveTitle:   "No inactive tags",
+			InactiveMessage: "No inactive event tags to display.",
+		},
+		Form: FormLabels{
+			Name:                   "Name",
+			NamePlaceholder:        "Enter tag name",
+			Description:            "Description",
+			DescriptionPlaceholder: "Enter description",
+			Color:                  "Color",
+			ColorPlaceholder:       "Enter color",
+			Active:                 "Active",
+		},
+		Actions: ActionLabels{
+			View:       "View",
+			Edit:       "Edit",
+			Delete:     "Delete",
+			Activate:   "Activate",
+			Deactivate: "Deactivate",
+		},
+	}
+}

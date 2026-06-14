@@ -28,7 +28,13 @@ func Describe() compose.Unit {
 				{Key: "events-confirmed", Route: "event.list", Params: map[string]string{"status": "confirmed"}, Label: "Confirmed", Icon: "icon-check-circle", Permission: "event:list"},
 				{Key: "events-completed", Route: "event.list", Params: map[string]string{"status": "completed"}, Label: "Completed", Icon: "icon-check-square", Permission: "event:list"},
 				{Key: "events-cancelled", Route: "event.list", Params: map[string]string{"status": "cancelled"}, Label: "Cancelled", Icon: "icon-x-circle", Permission: "event:list"},
-				{Key: "recurrence-patterns", Route: "recurrence.list", Params: map[string]string{"status": "active"}, Label: "Recurrence", Icon: "icon-repeat", Permission: "event:list"},
+				// NOTE: "recurrence-patterns" nav item removed — the recurrence
+				// entity (domain/event/recurrence) is scaffold-only (labels.go +
+				// routes.go, no view/module/descriptor), so it is not mounted in
+				// block.AllUnits and "recurrence.list" is never in the route table.
+				// A dangling nav ref fail-closes the entire cyta engine assembly
+				// (compose phase-3). Restore this item once recurrence ships a view
+				// module and is added to block.AllUnits.
 			},
 		},
 	}

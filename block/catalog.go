@@ -4,7 +4,7 @@ import (
 	event "github.com/erniealice/cyta-golang/domain/event"
 	eventpkg "github.com/erniealice/cyta-golang/domain/event/event"
 	eventtagpkg "github.com/erniealice/cyta-golang/domain/event/event_tag"
-	"github.com/erniealice/pyeza-golang/compose"
+	"github.com/erniealice/espyna-golang/consumer/compose"
 )
 
 // EventUnit returns a compose.Unit for the event (schedule) module.

@@ -18,11 +18,11 @@ import (
 	"log"
 
 	event "github.com/erniealice/cyta-golang/domain/event"
+	consumerapp "github.com/erniealice/espyna-golang/consumer/app"
 	"github.com/erniealice/espyna-golang/reference"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	eventpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
-	pyeza "github.com/erniealice/pyeza-golang"
 )
 
 // ---------------------------------------------------------------------------
@@ -64,7 +64,7 @@ func (c *blockConfig) wantEventTag() bool { return c.enableAll || c.eventTag }
 // Block registers cyta domain modules (schedule: events, calendar).
 // Call with no options to register ALL modules. Call with specific With*() options
 // to register a subset.
-func Block(opts ...BlockOption) pyeza.AppOption {
+func Block(opts ...BlockOption) consumerapp.AppOption {
 	cfg := &blockConfig{}
 	for _, opt := range opts {
 		opt(cfg)
@@ -75,7 +75,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 	moduleSelected := cfg.event || cfg.eventTag
 	cfg.enableAll = !moduleSelected
 
-	return func(ctx *pyeza.AppContext) error {
+	return func(ctx *consumerapp.AppContext) error {
 		// --- typed UseCases supplied via WithUseCases() ---
 		uc := cfg.useCases
 		// FAIL-CLOSED completeness gate: a missing REQUIRED closure for an enabled

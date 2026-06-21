@@ -10,7 +10,7 @@ import (
 	eventform "github.com/erniealice/cyta-golang/domain/event/event/form"
 
 	"github.com/erniealice/espyna-golang/consumer"
-	composehelper "github.com/erniealice/espyna-golang/consumer/compose"
+	consumerapp "github.com/erniealice/espyna-golang/consumer/app"
 	"github.com/erniealice/espyna-golang/reference"
 	commonpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
@@ -19,14 +19,13 @@ import (
 	eventtagpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event_tag"
 	eventtagassignmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event_tag_assignment"
 	scheduledashpb "github.com/erniealice/esqyma/pkg/schema/v1/service/dashboard/schedule"
-	"github.com/erniealice/pyeza-golang"
 )
 
-// cytaEngineBlock returns a pyeza.AppOption that registers the cyta event
+// cytaEngineBlock returns a consumerapp.AppOption that registers the cyta event
 // domain modules via the compose engine (replaces legacy cytaBlock).
-func EngineBlock() pyeza.AppOption {
-	return func(ctx *pyeza.AppContext) error {
-		uc, err := composehelper.RequireUseCases(ctx, "cytaEngineBlock")
+func EngineBlock() consumerapp.AppOption {
+	return func(ctx *consumerapp.AppContext) error {
+		uc, err := consumerapp.RequireUseCases(ctx, "cytaEngineBlock")
 		if err != nil {
 			return err
 		}
@@ -45,7 +44,7 @@ func EngineBlock() pyeza.AppOption {
 		}
 
 		units := AllUnits(adapted, infra)
-		return composehelper.AssembleEngineBlock("cyta", units, ctx)
+		return consumerapp.AssembleEngineBlock("cyta", units, ctx)
 	}
 }
 

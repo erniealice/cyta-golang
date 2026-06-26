@@ -19,7 +19,7 @@ import (
 
 	event "github.com/erniealice/cyta-golang/domain/event"
 	consumerapp "github.com/erniealice/espyna-golang/consumer/app"
-	"github.com/erniealice/espyna-golang/reference"
+	"github.com/erniealice/espyna-golang/ports"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	eventpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/event/event"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
@@ -173,7 +173,7 @@ func Block(opts ...BlockOption) consumerapp.AppOption {
 			// Reference-checker for the delete-guard. Optional — if not
 			// wired, the list page simply renders without the in-use tooltip.
 			if ctx.RefChecker != nil {
-				if refChecker, ok := ctx.RefChecker.(reference.Checker); ok && refChecker != nil {
+				if refChecker, ok := ctx.RefChecker.(ports.Checker); ok && refChecker != nil {
 					eventTagDeps.GetEventTagInUseIDs = refChecker.GetEventTagInUseIDs
 				}
 			}

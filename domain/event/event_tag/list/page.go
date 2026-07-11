@@ -72,7 +72,7 @@ func NewView(deps *Deps) view.View {
 				Title:          statusPageTitle(deps.Labels, status),
 				CurrentPath:    viewCtx.CurrentPath,
 				ActiveNav:      "schedule",
-				ActiveSubNav:   "event-tags-" + status,
+				ActiveSubNav:   "event-tags",
 				HeaderTitle:    statusPageTitle(deps.Labels, status),
 				HeaderSubtitle: statusPageCaption(deps.Labels, status),
 				HeaderIcon:     "icon-tag",
@@ -284,7 +284,7 @@ func buildTableRows(tags []*eventtagpb.EventTag, l event.Labels, common pyeza.Co
 				{Type: "text", Value: name},
 				{Type: "text", Value: description},
 				{Type: "html", Value: colorCellHTML},
-				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
+				{Type: "badge", Value: statusLabel(common, recordStatus), Variant: statusVariant(recordStatus)},
 				types.DateTimeCell(t.GetDateCreatedString(), types.DateReadable),
 			},
 			DataAttrs: map[string]string{
@@ -308,6 +308,19 @@ func statusVariant(status string) string {
 		return "warning"
 	default:
 		return "default"
+	}
+}
+
+// statusLabel maps the raw status key to its lyngua display label — the badge
+// cell renders Value verbatim, so passing the raw key would bypass translation.
+func statusLabel(cl pyeza.CommonLabels, status string) string {
+	switch status {
+	case "active":
+		return cl.Status.Active
+	case "inactive":
+		return cl.Status.Inactive
+	default:
+		return status
 	}
 }
 

@@ -33,7 +33,7 @@ type Routes struct {
 func DefaultRoutes() Routes {
 	return Routes{
 		ActiveNav:           "schedule",
-		ActiveSubNav:        "schedule",
+		ActiveSubNav:        "calendar",
 		ListURL:             ListURL,
 		DetailURL:           DetailURL,
 		AddURL:              AddURL,

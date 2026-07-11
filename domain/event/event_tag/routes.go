@@ -16,7 +16,7 @@ type Routes struct {
 func DefaultRoutes() Routes {
 	return Routes{
 		ActiveNav:    "schedule",
-		ActiveSubNav: "event-tags-active",
+		ActiveSubNav: "event-tags",
 		ListURL:      ListURL,
 		DetailURL:    DetailURL,
 		AddURL:       AddURL,

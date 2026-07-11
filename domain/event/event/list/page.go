@@ -89,7 +89,7 @@ func NewView(deps *ListViewDeps) view.View {
 				Title:          statusPageTitle(l, status),
 				CurrentPath:    viewCtx.CurrentPath,
 				ActiveNav:      deps.Routes.ActiveNav,
-				ActiveSubNav:   deps.Routes.ActiveSubNav,
+				ActiveSubNav:   "events-" + status,
 				HeaderTitle:    statusPageTitle(l, status),
 				HeaderSubtitle: l.Page.Caption,
 				HeaderIcon:     "icon-calendar",

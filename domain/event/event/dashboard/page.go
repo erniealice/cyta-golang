@@ -56,6 +56,13 @@ type PageData struct {
 // NewView creates the schedule dashboard view.
 func NewView(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		// Layer-3 read gate (U-04): the dashboard lists event names and
+		// aggregates, so it needs the same event:list permission as the list.
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("event", "list") {
+			return view.Forbidden("event:list")
+		}
+
 		l := deps.Labels.Dashboard
 
 		var resp *Response
